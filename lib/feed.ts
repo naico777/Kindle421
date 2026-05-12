@@ -1,5 +1,4 @@
 import { XMLParser } from "fast-xml-parser";
-import DOMPurify from "isomorphic-dompurify";
 import { FeedArticle } from "@/lib/types";
 import { sha256 } from "@/lib/security";
 
@@ -81,32 +80,76 @@ function toArticle(item: RssItem): FeedArticle | null {
 }
 
 function sanitizeForKindle(html: string) {
-  return DOMPurify.sanitize(html, {
-    ALLOWED_TAGS: [
-      "p",
-      "br",
-      "strong",
-      "em",
-      "b",
-      "i",
-      "u",
-      "blockquote",
-      "ul",
-      "ol",
-      "li",
-      "a",
-      "h2",
-      "h3",
-      "h4",
-      "img",
-      "figure",
-      "figcaption",
-    ],
-    ALLOWED_ATTR: ["href", "src", "alt", "title"],
-  }).replace(/<img([^>]+)>/g, (match) => {
-    const src = match.match(/\ssrc=["']([^"']+)["']/i)?.[1] ?? "";
-    return src.startsWith("http") ? match : "";
-  });
+  const allowedTags = new Set([
+    "p",
+    "br",
+    "strong",
+    "em",
+    "b",
+    "i",
+    "u",
+    "blockquote",
+    "ul",
+    "ol",
+    "li",
+    "a",
+    "h2",
+    "h3",
+    "h4",
+    "img",
+    "figure",
+    "figcaption",
+  ]);
+
+  return html
+    .replace(/<!--[\s\S]*?-->/g, "")
+    .replace(/<script[\s\S]*?<\/script>/gi, "")
+    .replace(/<style[\s\S]*?<\/style>/gi, "")
+    .replace(/\son\w+=["'][^"']*["']/gi, "")
+    .replace(/\s(?:style|class|id|width|height)=["'][^"']*["']/gi, "")
+    .replace(/\s(href|src)=["']\s*javascript:[^"']*["']/gi, "")
+    .replace(/<\/?([a-zA-Z0-9:-]+)([^>]*)>/g, (match, rawTag: string, rawAttrs: string) => {
+      const tag = rawTag.toLowerCase();
+      if (!allowedTags.has(tag)) return "";
+      if (match.startsWith("</")) return `</${tag}>`;
+      if (tag === "br") return "<br />";
+
+      const attrs = sanitizeAttrs(tag, rawAttrs);
+      return `<${tag}${attrs}>`;
+    })
+    .replace(/<img([^>]+)>/g, (match) => {
+      const src = match.match(/\ssrc=["']([^"']+)["']/i)?.[1] ?? "";
+      return /^https?:\/\//i.test(src) ? match : "";
+    });
+}
+
+function sanitizeAttrs(tag: string, attrs: string) {
+  const safeAttrs: string[] = [];
+  const attrPattern = /\s([a-zA-Z:-]+)=["']([^"']*)["']/g;
+  let match: RegExpExecArray | null;
+
+  while ((match = attrPattern.exec(attrs))) {
+    const name = match[1].toLowerCase();
+    const value = match[2].trim();
+
+    if (tag === "a" && name === "href" && /^https?:\/\//i.test(value)) {
+      safeAttrs.push(` href="${escapeAttr(value)}"`);
+    }
+
+    if (tag === "img" && name === "src" && /^https?:\/\//i.test(value)) {
+      safeAttrs.push(` src="${escapeAttr(value)}"`);
+    }
+
+    if (["img", "a"].includes(tag) && ["alt", "title"].includes(name)) {
+      safeAttrs.push(` ${name}="${escapeAttr(value)}"`);
+    }
+  }
+
+  return safeAttrs.join("");
+}
+
+function escapeAttr(value: string) {
+  return value.replaceAll("&", "&amp;").replaceAll('"', "&quot;").replaceAll("<", "&lt;");
 }
 
 function textValue(value: unknown): string {
