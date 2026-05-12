@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { subscribeAction, sendDevTestToKindleAction } from "@/app/actions";
+import { subscribeAction } from "@/app/actions";
 
 export default async function HomePage({ searchParams }: { searchParams: Promise<{ subscribed?: string; error?: string; test?: string }> }) {
   const params = await searchParams;
@@ -70,17 +70,6 @@ export default async function HomePage({ searchParams }: { searchParams: Promise
             Activar suscripción
           </button>
         </form>
-        {process.env.NODE_ENV !== "production" ? (
-          <form className="form" action={sendDevTestToKindleAction}>
-            <label>
-              Probar envío ahora a una dirección Kindle
-              <input required type="email" name="kindleEmail" placeholder="tu-nombre@kindle.com" />
-            </label>
-            <button className="button secondary" type="submit">
-              Enviar EPUB de prueba
-            </button>
-          </form>
-        ) : null}
       </section>
 
       <section className="grid" aria-label="Caracteristicas">
