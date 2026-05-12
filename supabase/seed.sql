@@ -1,0 +1,10 @@
+-- Optional local seed.
+-- insert into public.subscriptions (
+--   kindle_email,
+--   delivery_enabled,
+--   accepted_terms_at
+-- ) values (
+--   'beta@kindle.com',
+--   true,
+--   now()
+-- );
