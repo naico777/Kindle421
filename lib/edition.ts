@@ -1,4 +1,5 @@
 import path from "node:path";
+import { pathToFileURL } from "node:url";
 import Epub from "epub-gen-memory";
 import { FeedArticle } from "@/lib/types";
 import { sha256 } from "@/lib/security";
@@ -16,16 +17,19 @@ export async function buildEdition(articles: FeedArticle[], date = new Date()): 
   }).format(date);
 
   const fingerprint = sha256(articles.map((article) => article.fingerprint).join("|"));
-  const filename = `kindle421-${date.toISOString().slice(0, 10)}.epub`;
+  const filename = "421.news.epub";
+  const coverImageUrl = pathToFileURL(path.join(process.cwd(), "public", "epub", "cover.jpg")).href;
 
   const content = [
     {
       title: "Portada",
-      content: coverHtml(editionDate, articles.length),
+      content: coverHtml(editionDate, articles.length, coverImageUrl),
+      excludeFromToc: true,
     },
     {
       title: "Indice",
       content: indexHtml(articles),
+      excludeFromToc: true,
     },
     ...articles.map((article) => ({
       title: article.title,
@@ -34,12 +38,13 @@ export async function buildEdition(articles: FeedArticle[], date = new Date()): 
   ];
 
   const buffer = await Epub({
-    cover: path.join(process.cwd(), "public", "epub", "cover.jpg"),
-    title: `Kindle421 - ${editionDate}`,
-    author: "Kindle421",
+    cover: coverImageUrl,
+    title: "421.news",
+    author: "421.news",
     publisher: "Kindle421",
     lang: "es",
     tocTitle: "Indice",
+    prependChapterTitles: false,
     css: kindleCss(),
     ignoreFailedDownloads: true,
   }, content);
@@ -47,9 +52,10 @@ export async function buildEdition(articles: FeedArticle[], date = new Date()): 
   return { filename, buffer, fingerprint };
 }
 
-function coverHtml(date: string, count: number) {
+function coverHtml(date: string, count: number, coverImageUrl: string) {
   return `
     <section class="cover">
+      <img class="cover-image" src="${coverImageUrl}" alt="421.news" />
       <p class="date">${date}</p>
       <p>Edicion diaria de 421.news en español.</p>
       <p>${count} articulo${count === 1 ? "" : "s"} nuevo${count === 1 ? "" : "s"}.</p>
@@ -66,7 +72,7 @@ function indexHtml(articles: FeedArticle[]) {
           .map(
             (article, index) => `
               <li>
-                <a href="#article-${index + 1}">${escapeHtml(article.title)}</a>
+                <a href="#article-${article.fingerprint}">${escapeHtml(article.title)}</a>
                 <small>${formatDate(article.pubDate)}</small>
               </li>
             `,
@@ -96,8 +102,8 @@ function kindleCss() {
     p { margin: 0 0 1em; }
     img { max-width: 100%; height: auto; margin: 1em 0; }
     blockquote { border-left: 3px solid #777; margin-left: 0; padding-left: 1em; color: #333; }
-    .cover { text-align: center; padding-top: 25%; }
-    .cover h1 { font-size: 2.2em; letter-spacing: 0.04em; }
+    .cover { text-align: center; padding-top: 5%; }
+    .cover-image { display: block; width: 75%; max-width: 520px; margin: 0 auto 2em; }
     .date, .meta, small, .source { color: #555; font-size: 0.85em; }
     li { margin-bottom: 0.7em; }
   `;
