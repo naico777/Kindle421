@@ -1,3 +1,4 @@
+import path from "node:path";
 import Epub from "epub-gen-memory";
 import { FeedArticle } from "@/lib/types";
 import { sha256 } from "@/lib/security";
@@ -33,6 +34,7 @@ export async function buildEdition(articles: FeedArticle[], date = new Date()): 
   ];
 
   const buffer = await Epub({
+    cover: path.join(process.cwd(), "public", "epub", "cover.jpg"),
     title: `Kindle421 - ${editionDate}`,
     author: "Kindle421",
     publisher: "Kindle421",
@@ -48,7 +50,6 @@ export async function buildEdition(articles: FeedArticle[], date = new Date()): 
 function coverHtml(date: string, count: number) {
   return `
     <section class="cover">
-      <h1>Kindle421</h1>
       <p class="date">${date}</p>
       <p>Edicion diaria de 421.news en español.</p>
       <p>${count} articulo${count === 1 ? "" : "s"} nuevo${count === 1 ? "" : "s"}.</p>
