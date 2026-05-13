@@ -117,3 +117,9 @@ begin
   end if;
 end;
 $$;
+
+-- Explicit grants for PostgREST roles used by Supabase API.
+grant usage on schema public to anon, authenticated, service_role;
+grant all privileges on table public.subscriptions to service_role;
+grant all privileges on table public.rate_limits to service_role;
+grant execute on function public.touch_rate_limit(text, integer, integer) to anon, authenticated, service_role;
