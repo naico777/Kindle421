@@ -96,9 +96,6 @@ function sanitizeForKindle(html: string) {
     "h2",
     "h3",
     "h4",
-    "img",
-    "figure",
-    "figcaption",
   ]);
 
   return html
@@ -116,10 +113,6 @@ function sanitizeForKindle(html: string) {
 
       const attrs = sanitizeAttrs(tag, rawAttrs);
       return `<${tag}${attrs}>`;
-    })
-    .replace(/<img([^>]+)>/g, (match) => {
-      const src = match.match(/\ssrc=["']([^"']+)["']/i)?.[1] ?? "";
-      return /^https?:\/\//i.test(src) ? match : "";
     });
 }
 
@@ -136,11 +129,7 @@ function sanitizeAttrs(tag: string, attrs: string) {
       safeAttrs.push(` href="${escapeAttr(value)}"`);
     }
 
-    if (tag === "img" && name === "src" && /^https?:\/\//i.test(value)) {
-      safeAttrs.push(` src="${escapeAttr(value)}"`);
-    }
-
-    if (["img", "a"].includes(tag) && ["alt", "title"].includes(name)) {
+    if (tag === "a" && ["alt", "title"].includes(name)) {
       safeAttrs.push(` ${name}="${escapeAttr(value)}"`);
     }
   }

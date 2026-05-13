@@ -5,6 +5,7 @@ import { createSupabaseAdminClient } from "@/lib/supabase/server";
 import { DeliveryResult, Subscription } from "@/lib/types";
 
 const DAILY_SEND_LIMIT = 1;
+const MAX_ARTICLES_PER_EDITION = 8;
 
 export async function runDailyDelivery(): Promise<DeliveryResult[]> {
   const supabase = createSupabaseAdminClient();
@@ -40,7 +41,7 @@ async function deliverToSubscription(subscription: Subscription, allArticles: Aw
     return { status: "skipped", subscriptionId: subscription.id, reason: "tope diario alcanzado" };
   }
 
-  const newArticles = selectNewArticles(allArticles, subscription.last_article_fingerprint);
+  const newArticles = selectNewArticles(allArticles, subscription.last_article_fingerprint).slice(0, MAX_ARTICLES_PER_EDITION);
 
   if (newArticles.length === 0) {
     return { status: "skipped", subscriptionId: subscription.id, reason: "sin articulos nuevos" };
