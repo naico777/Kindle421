@@ -5,7 +5,7 @@ import { createSupabaseAdminClient } from "@/lib/supabase/server";
 import { DeliveryResult, Subscription } from "@/lib/types";
 
 const DAILY_SEND_LIMIT = 1;
-const MAX_ARTICLES_PER_EDITION = 20;
+const MAX_ARTICLES_PER_EDITION = 5;
 
 export async function runDailyDelivery(): Promise<DeliveryResult[]> {
   const supabase = createSupabaseAdminClient();
