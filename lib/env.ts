@@ -14,7 +14,14 @@ const envSchema = z.object({
   CRON_SECRET: z.string().min(16),
   ADMIN_EMAILS: z.string().default(""),
   CAPTCHA_SECRET: z.string().optional(),
-  NOTIFY_FAILURES_TO: z.string().email().optional(),
+  NOTIFY_FAILURES_TO: z.preprocess(
+    (value) => {
+      if (typeof value !== "string") return undefined;
+      const trimmed = value.trim().replace(/^['"]|['"]$/g, "");
+      return trimmed.length > 0 ? trimmed : undefined;
+    },
+    z.string().email().optional().catch(undefined),
+  ),
 });
 
 export function getEnv() {
