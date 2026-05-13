@@ -44,7 +44,9 @@ export default async function HomePage({ searchParams }: { searchParams: Promise
           <p className="notice">Listo. Guardamos tu dirección Kindle y la suscripción quedó activa.</p>
         ) : null}
         {params.error ? (
-          <p className="notice">No pudimos guardar la suscripción. Revisá que sea una dirección @kindle.com válida.</p>
+          <p className="notice">
+            No pudimos guardar la suscripción. Código: {params.error}. Revisá la configuración o compartime ese código.
+          </p>
         ) : null}
         {params.test === "sent" ? (
           <p className="notice">Enviamos una edición de prueba a esa dirección Kindle.</p>

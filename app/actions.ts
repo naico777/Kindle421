@@ -20,11 +20,16 @@ export async function subscribeAction(formData: FormData) {
 
   const supabase = createSupabaseAdminClient();
   const kindleEmail = normalizeEmail(parsed.data.kindleEmail);
-  const { data: allowed } = await supabase.rpc("touch_rate_limit", {
+  const { data: allowed, error: rateError } = await supabase.rpc("touch_rate_limit", {
     limit_key: `subscribe:${kindleEmail}`,
     max_count: 5,
     window_seconds: 3600,
   });
+
+  if (rateError) {
+    console.error("Kindle421 subscribe rate limit error", rateError);
+    redirect("/?error=rate-db#suscribirme");
+  }
 
   if (allowed === false) redirect("/?error=rate#suscribirme");
 
@@ -39,6 +44,10 @@ export async function subscribeAction(formData: FormData) {
     { onConflict: "kindle_email" },
   );
 
-  if (error) redirect("/?error=save#suscribirme");
+  if (error) {
+    console.error("Kindle421 subscribe upsert error", error);
+    redirect(`/?error=db-${encodeURIComponent(error.code ?? "unknown")}#suscribirme`);
+  }
+
   redirect("/?subscribed=1#suscribirme");
 }
