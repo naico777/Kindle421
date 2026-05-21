@@ -3,8 +3,11 @@ import Link from "next/link";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Kindle421",
-  description: "Revista 421 mensual adaptada para Kindle.",
+  title: "Kindle421 — La Revista 421 en tu Kindle",
+  description: "Recibí cada número de la Revista 421 como un libro nuevo en tu Kindle. Sin app, sin login, gratis.",
+  icons: {
+    icon: "/kindle421/logo-421.png",
+  },
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

@@ -32,6 +32,7 @@ create table if not exists public.magazine_issues (
   publication_date date not null,
   status text not null default 'draft',
   source_filename text,
+  cover_image_url text,
   source_text text not null,
   epub_fingerprint text,
   last_test_at timestamptz,
@@ -41,6 +42,9 @@ create table if not exists public.magazine_issues (
   constraint magazine_issues_status_valid check (status in ('draft', 'ready', 'sent')),
   constraint magazine_issues_source_text_present check (length(trim(source_text)) > 0)
 );
+
+alter table public.magazine_issues
+  add column if not exists cover_image_url text;
 
 create index if not exists magazine_issues_publication_date_idx
   on public.magazine_issues (publication_date desc);

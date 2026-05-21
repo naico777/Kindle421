@@ -4,6 +4,8 @@ node_modules
 .env*.local
 coverage
 dist
+tmp
+.DS_Store
 *.log
 tsconfig.tsbuildinfo
 *.swp

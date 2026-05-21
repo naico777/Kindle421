@@ -47,8 +47,8 @@ export default async function AdminPage({ searchParams }: { searchParams: Promis
               <input required type="number" min="1" name="issueNumber" placeholder="14" />
             </label>
             <label>
-              Título
-              <input required name="title" placeholder="Abril 2026" />
+              Título Kindle
+              <input required name="title" placeholder="421 #14: Especial Inteligencia Artificial (Abril '26)" />
             </label>
             <label>
               Fecha
@@ -58,6 +58,10 @@ export default async function AdminPage({ searchParams }: { searchParams: Promis
           <label>
             Archivo fuente
             <input name="sourceFilename" placeholder="14_abril.pdf" />
+          </label>
+          <label>
+            URL de portada
+            <input name="coverImageUrl" type="url" placeholder="https://..." />
           </label>
           <label>
             Texto adaptado
@@ -86,6 +90,9 @@ export default async function AdminPage({ searchParams }: { searchParams: Promis
               <tr key={issue.id}>
                 <td>#{issue.issue_number}</td>
                 <td>
+                  {issue.cover_image_url ? (
+                    <span className="issue-cover-thumb" aria-hidden="true" style={{ backgroundImage: `url(${issue.cover_image_url})` }} />
+                  ) : null}
                   <strong>{issue.title}</strong>
                   <br />
                   <span className="muted">{new Date(`${issue.publication_date}T12:00:00-03:00`).toLocaleDateString("es-AR")} · {issue.source_filename ?? "sin archivo"}</span>

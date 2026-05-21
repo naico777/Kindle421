@@ -18,6 +18,7 @@ export const magazineIssueSchema = z.object({
   title: z.string().trim().min(3),
   publicationDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
   sourceFilename: z.string().trim().optional(),
+  coverImageUrl: z.string().trim().url().optional().or(z.literal("")),
   sourceText: z.string().trim().min(200, "Pegá el texto adaptado del número antes de guardarlo."),
 });
 

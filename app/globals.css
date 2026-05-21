@@ -1,3 +1,5 @@
+@import url("https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,300;12..96,400;12..96,500;12..96,600;12..96,700;12..96,800&family=IBM+Plex+Mono:wght@400;500;600&family=Inter+Tight:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,400;1,600;1,800&display=swap");
+
 :root {
   --paper: #f7f2e8;
   --ink: #191714;
@@ -222,6 +224,17 @@ code {
   min-width: 16rem;
 }
 
+.issue-cover-thumb {
+  float: left;
+  width: 3.2rem;
+  aspect-ratio: 2 / 3;
+  background-position: center;
+  background-size: cover;
+  margin: 0 0.75rem 0.5rem 0;
+  border: 1px solid var(--line);
+  background-color: #fffdf7;
+}
+
 .checklist {
   margin: 0;
   padding-left: 1.2rem;
@@ -284,5 +297,611 @@ th {
 
   .site-header {
     flex-direction: column;
+  }
+}
+
+body:has(.kindle421-home) .site-header {
+  display: none;
+}
+
+.kindle421-home {
+  --black: #0a0a0a;
+  --home-ink: #0a0a0a;
+  --home-ink-dim: #58544a;
+  --home-paper: #f3eddb;
+  --home-paper-input: #fffced;
+  --home-cream: #efeadd;
+  --home-cream-dim: #c7bfa9;
+  --home-cream-mute: #a39988;
+  --home-yellow: #ffe600;
+  --home-green: #45d17c;
+  --home-green-deep: #1d6b3c;
+  --home-hero-grad: linear-gradient(125deg, #ffe600 0%, #ffe600 38%, #e7e25a 60%, #69d585 82%, #2cc4b2 100%);
+  --home-font-sans: "Inter Tight", -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+  --home-font-display: "Bricolage Grotesque", "Inter Tight", sans-serif;
+  --home-font-mono: "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+  --home-pad-x: clamp(20px, 5vw, 56px);
+  --home-radius-input: 8px;
+  --home-display-size: clamp(2.4rem, 7.2vw + 0.5rem, 5.6rem);
+
+  min-height: 100dvh;
+  background: var(--black);
+  color: var(--home-cream);
+  font-family: var(--home-font-sans);
+  line-height: 1.45;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+.kindle421-home *,
+.kindle421-home *::before,
+.kindle421-home *::after {
+  box-sizing: border-box;
+}
+
+.kindle421-home a {
+  color: inherit;
+}
+
+.kindle421-home .mono {
+  font-family: var(--home-font-mono);
+  font-weight: 500;
+  letter-spacing: 0.04em;
+}
+
+.kindle421-home .dim {
+  opacity: 0.65;
+}
+
+.kindle421-home .skip {
+  position: absolute;
+  left: -9999px;
+  top: 0;
+  background: var(--home-yellow);
+  color: var(--black);
+  padding: 10px 16px;
+  font-weight: 600;
+  z-index: 999;
+}
+
+.kindle421-home .skip:focus {
+  left: 12px;
+  top: 12px;
+}
+
+.kindle421-home .topbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 14px 22px;
+  padding: 22px var(--home-pad-x);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.kindle421-home .topbar-brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  text-decoration: none;
+  color: var(--home-cream);
+}
+
+.kindle421-home .logo {
+  display: block;
+  height: 32px;
+  width: auto;
+}
+
+.kindle421-home .brand-name {
+  font-weight: 600;
+  font-size: 16px;
+  letter-spacing: 0.01em;
+}
+
+.kindle421-home .tagline {
+  font-size: 11.5px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--home-yellow);
+  margin-left: auto;
+}
+
+.kindle421-home .hero {
+  display: grid;
+  grid-template-columns: 1fr;
+  grid-template-areas:
+    "intro"
+    "device"
+    "body";
+  gap: 0;
+  align-items: stretch;
+  min-height: auto;
+}
+
+.kindle421-home .hero-intro {
+  grid-area: intro;
+  padding: clamp(28px, 4vw, 48px) var(--home-pad-x) clamp(20px, 3vw, 32px);
+  display: flex;
+  flex-direction: column;
+  gap: clamp(16px, 2vw, 22px);
+}
+
+.kindle421-home .display {
+  font-family: var(--home-font-display);
+  font-weight: 800;
+  font-style: italic;
+  font-size: var(--home-display-size);
+  line-height: 0.95;
+  letter-spacing: -0.025em;
+  text-transform: uppercase;
+  margin: 0;
+  text-wrap: balance;
+}
+
+.kindle421-home .display .accent {
+  color: var(--home-yellow);
+}
+
+.kindle421-home .lede {
+  font-size: clamp(15px, 1.1vw + 0.6rem, 17px);
+  line-height: 1.45;
+  color: var(--home-cream-dim);
+  margin: 0;
+  max-width: 36em;
+  text-wrap: pretty;
+}
+
+.kindle421-home .inline-link {
+  color: var(--home-yellow);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  text-decoration-thickness: 1px;
+  text-decoration-color: rgba(255, 230, 0, 0.4);
+  font-weight: 500;
+}
+
+.kindle421-home .inline-link:hover {
+  text-decoration-color: var(--home-yellow);
+}
+
+.kindle421-home .device-panel {
+  grid-area: device;
+  position: relative;
+  background: var(--home-hero-grad);
+  padding: clamp(48px, 6vw, 72px) clamp(24px, 4vw, 56px) clamp(40px, 5vw, 56px);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  min-height: clamp(440px, 60vw, 720px);
+}
+
+.kindle421-home .device-labels {
+  position: absolute;
+  top: clamp(18px, 2vw, 28px);
+  left: clamp(24px, 4vw, 56px);
+  right: clamp(24px, 4vw, 56px);
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 12px;
+  font-size: 11.5px;
+  color: var(--black);
+}
+
+.kindle421-home .device-labels .mono:first-child {
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  font-weight: 600;
+}
+
+.kindle421-home .kindle {
+  width: 100%;
+  max-width: 430px;
+  aspect-ratio: 430 / 590;
+  background: #1f1d18;
+  border-radius: 18px;
+  padding: 14px;
+  box-shadow:
+    0 40px 70px -30px rgba(0, 0, 0, 0.6),
+    0 0 0 1px var(--black);
+  position: relative;
+  z-index: 1;
+}
+
+.kindle421-home .kindle-screen {
+  width: 100%;
+  height: 100%;
+  background: #e8e4d8;
+  border-radius: 4px;
+  overflow: hidden;
+  position: relative;
+  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.13);
+}
+
+.kindle421-home .kindle-screen img {
+  object-fit: cover;
+  filter: contrast(1.02);
+}
+
+.kindle421-home .kindle-scanlines {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background-image: repeating-linear-gradient(0deg, transparent 0 2px, rgba(0, 0, 0, 0.025) 2px 3px);
+}
+
+.kindle421-home .kindle-watermark {
+  position: absolute;
+  right: -8%;
+  bottom: -18%;
+  font-family: var(--home-font-display);
+  font-weight: 800;
+  font-style: italic;
+  font-size: clamp(180px, 38vw, 460px);
+  line-height: 1;
+  letter-spacing: -0.04em;
+  color: var(--black);
+  opacity: 0.05;
+  pointer-events: none;
+  user-select: none;
+  z-index: 0;
+}
+
+.kindle421-home .hero-body {
+  grid-area: body;
+  padding: clamp(28px, 4vw, 40px) var(--home-pad-x) clamp(36px, 5vw, 56px);
+  display: flex;
+  flex-direction: column;
+  gap: clamp(28px, 3.5vw, 40px);
+}
+
+.kindle421-home .steps {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 14px;
+}
+
+.kindle421-home .step {
+  background: #15140f;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 12px;
+  padding: 16px 18px 14px;
+  display: grid;
+  grid-template-columns: 36px 1fr;
+  grid-template-rows: auto auto;
+  column-gap: 14px;
+  row-gap: 4px;
+  align-items: start;
+}
+
+.kindle421-home .step-num {
+  grid-row: 1 / span 2;
+  width: 36px;
+  height: 36px;
+  border-radius: 999px;
+  background: var(--home-yellow);
+  color: var(--black);
+  font-family: var(--home-font-display);
+  font-weight: 700;
+  font-style: italic;
+  font-size: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-top: 2px;
+}
+
+.kindle421-home .step-title {
+  margin: 0;
+  font-family: var(--home-font-display);
+  font-style: italic;
+  font-weight: 700;
+  font-size: clamp(17px, 1vw + 0.5rem, 19px);
+  color: var(--home-cream);
+  letter-spacing: -0.01em;
+  line-height: 1.15;
+}
+
+.kindle421-home .step-desc {
+  margin: 0;
+  font-size: clamp(13.5px, 0.3vw + 0.8rem, 14.5px);
+  color: var(--home-cream-mute);
+  line-height: 1.55;
+  text-wrap: pretty;
+}
+
+.kindle421-home .step-jump {
+  color: var(--home-yellow);
+  text-decoration: none;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.kindle421-home .step-jump:hover {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.kindle421-home .copy-chip {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 6px;
+  font-family: var(--home-font-mono);
+  font-size: 12.5px;
+  color: var(--home-yellow);
+  background: rgba(255, 230, 0, 0.08);
+  border: 1px dashed rgba(255, 230, 0, 0.35);
+  border-radius: 6px;
+  padding: 2px 7px;
+  cursor: pointer;
+  white-space: nowrap;
+  font-weight: 500;
+  transition:
+    background 120ms,
+    border-color 120ms;
+}
+
+.kindle421-home .copy-chip:hover {
+  background: rgba(255, 230, 0, 0.16);
+  border-color: rgba(255, 230, 0, 0.6);
+}
+
+.kindle421-home .copy-chip:focus-visible {
+  outline: 2px solid var(--home-yellow);
+  outline-offset: 2px;
+}
+
+.kindle421-home .copy-chip-icon {
+  font-family: var(--home-font-sans);
+  font-size: 11px;
+  letter-spacing: 0.04em;
+  color: var(--home-cream-mute);
+  transition: color 120ms;
+}
+
+.kindle421-home .copy-chip.is-copied {
+  background: rgba(105, 213, 133, 0.18);
+  border-color: rgba(105, 213, 133, 0.6);
+}
+
+.kindle421-home .copy-chip.is-copied .copy-chip-icon {
+  color: var(--home-green);
+}
+
+.kindle421-home .kindle-domain {
+  font-family: var(--home-font-mono);
+  color: var(--home-yellow);
+  font-weight: 600;
+  background: transparent;
+  padding: 0;
+}
+
+.kindle421-home .kindle-domain.dark {
+  color: var(--black);
+}
+
+.kindle421-home .subscribe {
+  background: var(--home-yellow);
+  border: 1.5px solid var(--black);
+  border-radius: 14px;
+  padding: clamp(20px, 2.5vw, 28px) clamp(20px, 3vw, 32px);
+  color: var(--black);
+  box-shadow: 0 12px 28px -14px rgba(0, 0, 0, 0.5);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.kindle421-home .subscribe-title {
+  font-size: clamp(2rem, 4vw + 0.6rem, 3rem);
+  color: var(--black);
+  letter-spacing: -0.03em;
+}
+
+.kindle421-home .subscribe-lede {
+  margin: 0;
+  font-size: clamp(13.5px, 0.3vw + 0.8rem, 15px);
+  line-height: 1.45;
+  color: #3a3833;
+  max-width: 40em;
+  text-wrap: pretty;
+}
+
+.kindle421-home .subscribe-form {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 10px;
+  align-items: end;
+  margin-top: 4px;
+}
+
+.kindle421-home .subscribe-field {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.kindle421-home .subscribe-label {
+  font-size: 10.5px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--black);
+  opacity: 0.7;
+}
+
+.kindle421-home .subscribe-form input[type="email"] {
+  background: var(--home-paper-input);
+  border: 1.5px solid var(--black);
+  color: var(--black);
+  padding: 13px 14px;
+  border-radius: var(--home-radius-input);
+  font-family: var(--home-font-mono);
+  font-size: 14.5px;
+  outline: none;
+  width: 100%;
+  min-width: 0;
+  transition: box-shadow 120ms;
+}
+
+.kindle421-home .subscribe-form input[type="email"]:focus {
+  box-shadow: 0 0 0 3px rgba(10, 10, 10, 0.18);
+}
+
+.kindle421-home .subscribe-form input[type="email"]:invalid:not(:placeholder-shown) {
+  border-color: #c14a3a;
+}
+
+.kindle421-home .subscribe-submit {
+  background: var(--black);
+  color: var(--home-yellow);
+  border: none;
+  padding: 14px 20px;
+  border-radius: var(--home-radius-input);
+  font-family: var(--home-font-sans);
+  font-size: 15px;
+  font-weight: 700;
+  cursor: pointer;
+  letter-spacing: 0.01em;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  white-space: nowrap;
+  transition:
+    transform 80ms,
+    background 120ms;
+}
+
+.kindle421-home .subscribe-submit:hover {
+  background: #1f1d18;
+}
+
+.kindle421-home .subscribe-submit:active {
+  transform: translateY(1px);
+}
+
+.kindle421-home .subscribe-fineprint {
+  margin: 4px 0 0;
+  font-size: 12px;
+  color: #58544a;
+}
+
+.kindle421-home .subscribe-fineprint.is-error {
+  color: #c14a3a;
+}
+
+.kindle421-home .subscribe-fineprint.is-success {
+  color: var(--home-green-deep);
+  font-weight: 600;
+}
+
+@media (min-width: 640px) {
+  .kindle421-home .subscribe-form {
+    grid-template-columns: 1fr auto;
+  }
+}
+
+@media (min-width: 768px) {
+  .kindle421-home .steps {
+    grid-template-columns: repeat(3, 1fr);
+  }
+
+  .kindle421-home .step {
+    grid-template-columns: 1fr;
+    grid-template-rows: auto auto auto;
+    row-gap: 6px;
+    padding: 16px 18px 14px;
+  }
+
+  .kindle421-home .step-num {
+    grid-row: auto;
+    width: 30px;
+    height: 30px;
+    font-size: 14px;
+  }
+
+  .kindle421-home .kindle {
+    max-width: 380px;
+  }
+}
+
+@media (min-width: 1024px) {
+  .kindle421-home .hero {
+    grid-template-columns: minmax(0, 1fr) clamp(520px, 45vw, 660px);
+    grid-template-areas:
+      "intro device"
+      "body device";
+    align-items: start;
+  }
+
+  .kindle421-home .hero-intro {
+    padding: clamp(40px, 4vw, 56px) clamp(40px, 4vw, 56px) 8px clamp(40px, 4vw, 56px);
+  }
+
+  .kindle421-home .hero-body {
+    padding: 24px clamp(40px, 4vw, 56px) clamp(40px, 4vw, 56px);
+  }
+
+  .kindle421-home .device-panel {
+    height: 100%;
+    min-height: 720px;
+    padding: clamp(48px, 5vw, 72px) clamp(32px, 4vw, 48px);
+  }
+
+  .kindle421-home .kindle {
+    max-width: 430px;
+  }
+
+  .kindle421-home .lede {
+    font-size: 17px;
+    max-width: 38em;
+  }
+
+  .kindle421-home .topbar {
+    padding: 24px clamp(40px, 4vw, 56px);
+  }
+}
+
+@media (max-width: 640px) {
+  .kindle421-home .topbar {
+    gap: 10px 14px;
+    padding: 18px;
+  }
+
+  .kindle421-home .tagline {
+    margin-left: 0;
+    width: 100%;
+    font-size: 10.5px;
+  }
+}
+
+@media (max-width: 380px) {
+  .kindle421-home .copy-chip {
+    font-size: 12px;
+  }
+
+  .kindle421-home .device-panel {
+    min-height: 400px;
+  }
+}
+
+@media (min-width: 1400px) {
+  .kindle421-home .kindle {
+    max-width: 460px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .kindle421-home {
+    scroll-behavior: auto;
+  }
+
+  .kindle421-home .subscribe-submit {
+    transition: none;
   }
 }

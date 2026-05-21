@@ -50,7 +50,7 @@ export async function sendMagazineEdition(params: {
 }) {
   const env = getEnv();
   const resend = new Resend(env.RESEND_API_KEY);
-  const subject = `Revista 421 #${params.issueNumber}: ${params.issueTitle}`;
+  const subject = params.issueTitle;
 
   return retry(async () => {
     const result = await resend.emails.send({
@@ -60,7 +60,7 @@ export async function sendMagazineEdition(params: {
       text: [
         "Hola,",
         "",
-        `Adjuntamos la Revista 421 #${params.issueNumber}, adaptada para Kindle.`,
+        `Adjuntamos ${params.issueTitle}, adaptada para Kindle.`,
         `Incluye ${params.chapterCount} capitulo${params.chapterCount === 1 ? "" : "s"}.`,
         "",
         "Cada numero mensual llega como un documento/libro nuevo en tu biblioteca Kindle.",

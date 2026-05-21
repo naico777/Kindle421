@@ -1,113 +1,160 @@
+import Image from "next/image";
 import Link from "next/link";
 import { subscribeAction } from "@/app/actions";
+import { CopyChip } from "@/app/copy-chip";
 
-export default async function HomePage({ searchParams }: { searchParams: Promise<{ subscribed?: string; error?: string; test?: string }> }) {
+export default async function HomePage({
+  searchParams,
+}: {
+  searchParams: Promise<{ subscribed?: string; error?: string; test?: string }>;
+}) {
   const params = await searchParams;
 
   return (
-    <main className="page">
+    <main className="kindle421-home">
+      <a className="skip" href="#suscribirme">
+        Saltar a la suscripción
+      </a>
+
+      <header className="topbar">
+        <Link className="topbar-brand" href="/">
+          <Image className="logo" src="/kindle421/logo-421.png" alt="421" width={84} height={40} priority />
+          <span className="brand-name">Kindle421</span>
+        </Link>
+        <span className="tagline mono">Revista mensual · Optimizada para e-reader</span>
+      </header>
+
       <section className="hero">
-        <div>
-          <p className="eyebrow">Revista mensual · Optimizada para e-reader</p>
-          <h1>La Revista 421 en tu Kindle.</h1>
-          <p className="lead">
-            Recibí cada especial mensual de 421.news como un libro nuevo en tu Kindle: portada, índice y capítulos
-            preparados para leer cómodo en tinta electrónica.
+        <section className="hero-intro">
+          <h1 className="display">
+            La&nbsp;Revista&nbsp;421
+            <br />
+            <span className="accent">en&nbsp;tu&nbsp;Kindle.</span>
+          </h1>
+          <p className="lede">
+            Recibí cada especial mensual de{" "}
+            <a className="inline-link" href="https://421.news" target="_blank" rel="noreferrer noopener">
+              421.news
+            </a>{" "}
+            como un libro nuevo en tu Kindle: portada, índice y capítulos preparados para leer como un/a chad total.
           </p>
-          <div className="actions">
-            <a className="button" href="#suscribirme">
-              Recibir en mi Kindle
-            </a>
-            <Link className="button secondary" href="/docs">
-              Leer funcionamiento
-            </Link>
+        </section>
+
+        <aside className="device-panel" aria-label="Última entrega en Kindle">
+          <div className="device-labels">
+            <span className="mono">Última entrega</span>
+            <span className="mono dim">#14 · Abril 2026</span>
           </div>
-        </div>
-        <aside className="kindle-card magazine-preview" aria-label="Vista previa editorial">
-          <p className="eyebrow">Próxima entrega</p>
-          <h2>Revista 421</h2>
-          <p className="issue">#14 · Abril 2026</p>
-          <hr />
-          <ol className="mini-toc">
-            <li>Editorial</li>
-            <li>¿Sueñan los modelos de lenguaje con ovejas eléctricas?</li>
-            <li>Notas, entrevistas y ensayos del especial</li>
-          </ol>
-          <p className="device-note">Llega como EPUB adjunto a tu dirección @kindle.com.</p>
+          <div className="kindle">
+            <div className="kindle-screen">
+              <Image
+                src="/kindle421/cover-14-kindle.png"
+                alt="Tapa de Revista 421 #14 — abril 2026"
+                fill
+                sizes="(min-width: 1024px) 430px, 80vw"
+                priority
+              />
+              <div className="kindle-scanlines" aria-hidden="true" />
+            </div>
+          </div>
+          <div className="kindle-watermark" aria-hidden="true">
+            14
+          </div>
         </aside>
-      </section>
 
-      <section className="flow" aria-label="Funcionamiento">
-        <article className="panel">
-          <span className="step">1</span>
-          <h2>Dejás tu @kindle</h2>
-          <p className="muted">No hay cuenta ni login. Solo necesitamos la dirección Send-to-Kindle.</p>
-        </article>
-        <article className="panel">
-          <span className="step">2</span>
-          <h2>Autorizás el remitente</h2>
-          <p className="muted">Amazon solo acepta documentos desde emails aprobados por vos.</p>
-        </article>
-        <article className="panel">
-          <span className="step">3</span>
-          <h2>Recibís cada número</h2>
-          <p className="muted">Cuando sale una revista nueva, llega como un libro independiente en tu biblioteca.</p>
-        </article>
-      </section>
+        <section className="hero-body">
+          <ol className="steps" aria-label="Cómo funciona en 3 pasos">
+            <li className="step">
+              <div className="step-num" aria-hidden="true">
+                1
+              </div>
+              <h3 className="step-title">Autorizanos en Amazon</h3>
+              <p className="step-desc">
+                Abrí{" "}
+                <a
+                  className="inline-link"
+                  href="https://www.amazon.com/hz/mycd/preferences/myx#/home/settings/payment"
+                  target="_blank"
+                  rel="noreferrer noopener"
+                >
+                  tu configuración de Kindle
+                </a>{" "}
+                y agregá a <CopyChip value="envios@kindle421.xyz" /> como remitente.
+              </p>
+            </li>
+            <li className="step">
+              <div className="step-num" aria-hidden="true">
+                2
+              </div>
+              <h3 className="step-title">Danos el mail de tu Kindle</h3>
+              <p className="step-desc">
+                Suscribite al envío mensual poniendo tu dirección <code className="kindle-domain">@kindle.com</code>{" "}
+                <a className="step-jump" href="#suscribirme">
+                  acá abajo →
+                </a>
+              </p>
+            </li>
+            <li className="step">
+              <div className="step-num" aria-hidden="true">
+                3
+              </div>
+              <h3 className="step-title">Sincronizá tu Kindle</h3>
+              <p className="step-desc">En unos minutos ya deberías ver la última entrega en tu Kindle ;)</p>
+            </li>
+          </ol>
 
-      <section className="panel stack" id="suscribirme">
-        <h2 className="section-title">Suscribirme</h2>
-        <p className="lead">
-          No necesitás crear usuario. Dejá tu dirección <strong>@kindle.com</strong>, autorizá el remitente en Amazon
-          y te enviamos cada número mensual cuando esté listo.
-        </p>
-        {params.subscribed ? (
-          <p className="notice">Listo. Guardamos tu dirección Kindle y la suscripción quedó activa.</p>
-        ) : null}
-        {params.error ? (
-          <p className="notice">
-            No pudimos guardar la suscripción. Código: {params.error}. Revisá la configuración o compartime ese código.
-          </p>
-        ) : null}
-        {params.test === "sent" ? (
-          <p className="notice">Enviamos una edición de prueba a esa dirección Kindle.</p>
-        ) : null}
-        <form className="form" action={subscribeAction}>
-          <label>
-            Dirección Kindle
-            <input required type="email" name="kindleEmail" placeholder="tu-nombre@kindle.com" />
-          </label>
-          <div className="panel">
-            <h3>Checklist rápida</h3>
-            <ol className="checklist">
-              <li>Buscá tu dirección en Amazon, sección “Send to Kindle Email Settings”.</li>
-              <li>Autorizá nuestro remitente de envío en Amazon.</li>
-              <li>Cada número mensual aparecerá como un libro/documento nuevo en tu biblioteca.</li>
-            </ol>
-            <label className="row">
-              <input required type="checkbox" name="acceptedChecklist" />
-              Confirmo que entiendo la configuración de Amazon/Kindle y quiero activar el envío.
-            </label>
-          </div>
-          <button className="button" type="submit">
-            Activar suscripción
-          </button>
-        </form>
-      </section>
-
-      <section className="grid" aria-label="Caracteristicas">
-        <div className="panel">
-          <h2>Solo la revista</h2>
-          <p className="muted">No mandamos artículos sueltos ni newsletters diarias. Solo los especiales mensuales.</p>
-        </div>
-        <div className="panel">
-          <h2>Versión e-reader</h2>
-          <p className="muted">Convertimos el PDF en una lectura fluida, con capítulos navegables y texto reflowable.</p>
-        </div>
-        <div className="panel">
-          <h2>Biblioteca ordenada</h2>
-          <p className="muted">Cada entrega queda como un número independiente, ideal para coleccionar y volver a leer.</p>
-        </div>
+          <section className="subscribe" id="suscribirme" aria-labelledby="subscribe-title">
+            <h2 className="subscribe-title display" id="subscribe-title">
+              Suscribirme
+            </h2>
+            <p className="subscribe-lede">
+              Dejá tu dirección <code className="kindle-domain dark">@kindle.com</code> y activá la suscripción. Antes
+              seguí los pasos de arriba para autorizarnos en Amazon.
+            </p>
+            {params.subscribed ? (
+              <p className="subscribe-fineprint is-success" role="status">
+                Listo. Guardamos tu dirección Kindle y la suscripción quedó activa.
+              </p>
+            ) : null}
+            {params.error ? (
+              <p className="subscribe-fineprint is-error" role="status">
+                No pudimos guardar la suscripción. Código: {params.error}. Revisá la configuración o compartime ese
+                código.
+              </p>
+            ) : null}
+            {params.test === "sent" ? (
+              <p className="subscribe-fineprint is-success" role="status">
+                Enviamos una edición de prueba a esa dirección Kindle.
+              </p>
+            ) : null}
+            <form className="subscribe-form" action={subscribeAction}>
+              <input type="hidden" name="acceptedChecklist" value="on" />
+              <label className="subscribe-field">
+                <span className="subscribe-label mono">Dirección Kindle</span>
+                <input
+                  type="email"
+                  name="kindleEmail"
+                  required
+                  autoComplete="email"
+                  placeholder="tu-nombre@kindle.com"
+                  pattern=".+@kindle\.com$"
+                  title="Tiene que terminar en @kindle.com"
+                />
+              </label>
+              <button className="subscribe-submit" type="submit">
+                <span className="subscribe-submit-label">Activar suscripción</span>
+                <span className="subscribe-submit-arrow" aria-hidden="true">
+                  →
+                </span>
+              </button>
+            </form>
+            {!params.subscribed && !params.error && params.test !== "sent" ? (
+              <p className="subscribe-fineprint" id="subscribe-status" role="status" aria-live="polite">
+                Sin spam. Te podés bajar cuando quieras.
+              </p>
+            ) : null}
+          </section>
+        </section>
       </section>
     </main>
   );

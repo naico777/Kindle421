@@ -22,6 +22,7 @@ export type MagazineIssue = {
   publication_date: string;
   status: "draft" | "ready" | "sent";
   source_filename: string | null;
+  cover_image_url: string | null;
   source_text: string;
   epub_fingerprint: string | null;
   last_test_at: string | null;

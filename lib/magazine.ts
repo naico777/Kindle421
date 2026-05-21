@@ -16,11 +16,23 @@ type Chapter = {
   body: string;
 };
 
-export async function buildMagazineEdition(issue: Pick<MagazineIssue, "issue_number" | "title" | "publication_date" | "source_text">): Promise<MagazineEdition> {
+type ImageBlock = {
+  alt: string;
+  src: string;
+};
+
+type ChapterOpening = {
+  meta: string | null;
+  deck: string | null;
+  image: ImageBlock | null;
+  bodyBlocks: string[];
+};
+
+export async function buildMagazineEdition(issue: Pick<MagazineIssue, "issue_number" | "title" | "publication_date" | "cover_image_url" | "source_text">): Promise<MagazineEdition> {
   const chapters = parseMagazineText(issue.source_text);
-  const fingerprint = sha256(`${issue.issue_number}|${issue.title}|${issue.publication_date}|${issue.source_text}`);
+  const fingerprint = sha256(`${issue.issue_number}|${issue.title}|${issue.publication_date}|${issue.cover_image_url ?? ""}|${issue.source_text}`);
   const filename = `revista-421-${issue.issue_number}.epub`;
-  const coverImageUrl = pathToFileURL(path.join(process.cwd(), "public", "epub", "cover.jpg")).href;
+  const coverImageUrl = issue.cover_image_url?.trim() || pathToFileURL(path.join(process.cwd(), "public", "epub", "cover.jpg")).href;
   const issueDate = formatIssueDate(issue.publication_date);
 
   const content = [
@@ -38,7 +50,7 @@ export async function buildMagazineEdition(issue: Pick<MagazineIssue, "issue_num
 
   const buffer = await Epub({
     cover: coverImageUrl,
-    title: "Revista 421",
+    title: issue.title,
     author: "421.news",
     publisher: "421.news",
     lang: "es",
@@ -148,8 +160,8 @@ function inferTitle(page: string) {
 function magazineCoverHtml(issue: Pick<MagazineIssue, "issue_number" | "title">, issueDate: string, coverImageUrl: string, chapterCount: number) {
   return `
     <section class="cover">
-      <img class="cover-image" src="${coverImageUrl}" alt="Revista 421" />
-      <p class="kicker">Revista 421 #${issue.issue_number}</p>
+      <img class="cover-image" src="${coverImageUrl}" alt="${escapeHtml(issue.title)}" />
+      <p class="kicker">421 #${issue.issue_number}</p>
       <h1>${escapeHtml(issue.title)}</h1>
       <p class="date">${escapeHtml(issueDate)}</p>
       <p>${chapterCount} capitulo${chapterCount === 1 ? "" : "s"} adaptado${chapterCount === 1 ? "" : "s"} para e-reader.</p>
@@ -158,25 +170,110 @@ function magazineCoverHtml(issue: Pick<MagazineIssue, "issue_number" | "title">,
 }
 
 function chapterHtml(chapter: Chapter) {
+  if (chapter.title.toLowerCase() === "editorial") {
+    return `
+      <article class="editorial">
+        <h1>${inlineMarkdown(chapter.title)}</h1>
+        ${blocksHtml(
+          chapter.body
+            .split(/\n{2,}/)
+            .map((block) => block.trim())
+            .filter(Boolean),
+        )}
+      </article>
+    `;
+  }
+
+  const opening = chapterOpening(chapter);
+
   return `
     <article>
-      <h1>${escapeHtml(chapter.title)}</h1>
-      ${paragraphsHtml(chapter.body)}
+      <section class="article-opening">
+        ${opening.image ? imageHtml(opening.image, "hero-image") : ""}
+        ${opening.meta ? `<p class="meta">${inlineMarkdown(opening.meta)}</p>` : ""}
+        <h1>${inlineMarkdown(chapter.title)}</h1>
+        ${opening.deck ? `<p class="deck">${inlineMarkdown(opening.deck)}</p>` : ""}
+      </section>
+      <section class="article-body">
+        ${blocksHtml(opening.bodyBlocks)}
+      </section>
     </article>
   `;
 }
 
-function paragraphsHtml(text: string) {
-  return text
+function chapterOpening(chapter: Chapter): ChapterOpening {
+  const blocks = chapter.body
     .split(/\n{2,}/)
     .map((block) => block.trim())
-    .filter(Boolean)
+    .filter(Boolean);
+
+  const metaIndex = blocks.findIndex((block) => /^Por\s+/i.test(block));
+  const imageIndex = blocks.findIndex((block, index) => index < 8 && Boolean(parseImageBlock(block)));
+  const openingEnd = Math.max(metaIndex, imageIndex, 1);
+  const openingBlocks = blocks.slice(0, openingEnd + 1);
+  const image = imageIndex >= 0 ? parseImageBlock(blocks[imageIndex]) : null;
+  const meta = metaIndex >= 0 ? blocks[metaIndex] : null;
+  const deck =
+    openingBlocks.find((block) => block !== meta && !parseImageBlock(block) && !/^#{1,6}\s+/.test(block)) ?? null;
+  const consumed = new Set([meta, deck, imageIndex >= 0 ? blocks[imageIndex] : null].filter(Boolean));
+  const bodyBlocks = blocks.filter((block, index) => index > openingEnd || !consumed.has(block));
+
+  return { meta, deck, image, bodyBlocks };
+}
+
+function blocksHtml(blocks: string[]) {
+  return blocks
     .map((block) => {
+      const image = parseImageBlock(block);
+      if (image) return imageHtml(image, "inline-image");
+
       if (/^#{1,6}\s+/.test(block)) return "";
-      if (/^Por\s+/i.test(block)) return `<p class="meta">${escapeHtml(block)}</p>`;
-      return `<p>${escapeHtml(block).replace(/\n/g, "<br />")}</p>`;
+      if (/^Por\s+/i.test(block)) return `<p class="meta">${inlineMarkdown(block)}</p>`;
+      if (isSectionBreak(block)) return `<h2>${inlineMarkdown(block)}</h2>`;
+      return `<p>${inlineMarkdown(block).replace(/\n/g, "<br />")}</p>`;
     })
     .join("\n");
+}
+
+function imageHtml(image: ImageBlock, className: string) {
+  return `
+    <figure class="${className}">
+      <img src="${escapeHtml(resolveImageSource(image.src))}" alt="${escapeHtml(image.alt)}" />
+      ${image.alt ? `<figcaption>${inlineMarkdown(image.alt)}</figcaption>` : ""}
+    </figure>
+  `;
+}
+
+function parseImageBlock(block: string): ImageBlock | null {
+  const match = block.match(/^!\[([^\]]*)\]\(([^)]+)\)$/);
+  if (!match) return null;
+  return { alt: match[1].trim(), src: match[2].trim() };
+}
+
+function resolveImageSource(src: string) {
+  if (/^(https?:|file:|data:)/i.test(src)) return src;
+  return pathToFileURL(path.resolve(src)).href;
+}
+
+function isSectionBreak(block: string) {
+  return block.length <= 95 && !/[.!?:;»”)]$/.test(block) && /^[A-ZÁÉÍÓÚÑ¿¡]/.test(block);
+}
+
+function inlineMarkdown(value: string) {
+  const placeholders: string[] = [];
+  const stash = (html: string) => {
+    placeholders.push(html);
+    return `\u0000${placeholders.length - 1}\u0000`;
+  };
+
+  const escaped = escapeHtml(value)
+    .replace(/\[([^\]]+)\]\((https?:\/\/[^)\s]+)\)/g, (_match, label: string, href: string) =>
+      stash(`<a href="${href}">${label}</a>`),
+    )
+    .replace(/\*\*([^*]+)\*\*/g, (_match, text: string) => stash(`<strong>${text}</strong>`))
+    .replace(/(^|[\s(])\*([^*\n]+)\*/g, (_match, prefix: string, text: string) => `${prefix}${stash(`<em>${text}</em>`)}`);
+
+  return placeholders.reduce((html, placeholder, index) => html.replaceAll(`\u0000${index}\u0000`, placeholder), escaped);
 }
 
 function formatIssueDate(date: string) {
@@ -257,11 +354,22 @@ function kindleCss() {
   return `
     body { font-family: Georgia, serif; color: #111; line-height: 1.55; }
     h1 { font-size: 1.65em; line-height: 1.18; margin: 0 0 0.75em; }
+    h2 { font-size: 1.08em; line-height: 1.3; margin: 2.1em 0 0.75em; font-weight: 700; }
     p { margin: 0 0 1em; }
+    a { color: inherit; text-decoration: underline; }
     img { max-width: 100%; height: auto; margin: 1em 0; }
+    figure { margin: 1.4em 0; page-break-inside: avoid; }
+    figcaption { color: #555; font-size: 0.82em; line-height: 1.35; margin-top: 0.4em; text-align: center; }
+    .inline-image img { display: block; margin-left: auto; margin-right: auto; }
+    .article-opening { page-break-before: always; page-break-after: always; text-align: center; padding-top: 4%; }
+    .article-opening h1 { font-size: 2em; line-height: 1.1; margin: 0.5em 0; }
+    .article-opening .meta { margin-bottom: 1.2em; }
+    .deck { font-size: 1.05em; font-weight: 700; line-height: 1.35; }
+    .hero-image { margin: 0 auto 1.2em; }
+    .hero-image img { display: block; width: 100%; max-height: 72vh; object-fit: contain; margin: 0 auto; }
     .cover { text-align: center; padding-top: 5%; }
     .cover h1 { font-size: 2em; }
-    .cover-image { display: block; width: 78%; max-width: 520px; margin: 0 auto 2em; }
+    .cover-image { display: block; width: 92%; max-width: 620px; margin: 0 auto 2em; }
     .kicker, .date, .meta { color: #555; font-size: 0.88em; }
   `;
 }

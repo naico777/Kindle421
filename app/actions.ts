@@ -62,6 +62,7 @@ export async function createMagazineIssueAction(formData: FormData) {
     title: formData.get("title"),
     publicationDate: formData.get("publicationDate"),
     sourceFilename: formData.get("sourceFilename"),
+    coverImageUrl: formData.get("coverImageUrl"),
     sourceText: formData.get("sourceText"),
   });
 
@@ -77,6 +78,7 @@ export async function createMagazineIssueAction(formData: FormData) {
       slug,
       publication_date: parsed.data.publicationDate,
       source_filename: parsed.data.sourceFilename || null,
+      cover_image_url: parsed.data.coverImageUrl || null,
       source_text: parsed.data.sourceText,
       status: "draft",
       epub_fingerprint: null,
