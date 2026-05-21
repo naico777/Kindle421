@@ -194,6 +194,34 @@ input {
   padding: 0.9rem 1rem;
 }
 
+textarea {
+  width: 100%;
+  border: 1px solid var(--line);
+  background: #fffdf7;
+  color: var(--ink);
+  padding: 0.9rem 1rem;
+  font: 0.95rem/1.45 ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+}
+
+code {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 0.9em;
+}
+
+.wide-form {
+  max-width: none;
+}
+
+.form-grid {
+  margin-top: 0;
+}
+
+.inline-form {
+  display: grid;
+  gap: 0.5rem;
+  min-width: 16rem;
+}
+
 .checklist {
   margin: 0;
   padding-left: 1.2rem;

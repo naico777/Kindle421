@@ -1,30 +1,127 @@
 import { redirect } from "next/navigation";
+import { createMagazineIssueAction, sendMagazineIssueAction, sendMagazineTestAction } from "@/app/actions";
 import { getEnv } from "@/lib/env";
 import { createSupabaseAdminClient } from "@/lib/supabase/server";
-import { Subscription } from "@/lib/types";
+import { MagazineIssue, Subscription } from "@/lib/types";
 
-export default async function AdminPage({ searchParams }: { searchParams: Promise<{ key?: string }> }) {
+export default async function AdminPage({ searchParams }: { searchParams: Promise<{ key?: string; status?: string }> }) {
   const params = await searchParams;
-  if (params.key !== getEnv().CRON_SECRET) redirect("/");
+  const adminKey = getEnv().CRON_SECRET;
+  if (params.key !== adminKey) redirect("/");
 
   const admin = createSupabaseAdminClient();
-  const { data: subscriptions, error } = await admin
+  const { data: subscriptions, error: subscriptionsError } = await admin
     .from("subscriptions")
     .select("*")
     .order("created_at", { ascending: false })
     .limit(200);
 
-  if (error) throw error;
+  if (subscriptionsError) throw subscriptionsError;
+
+  const { data: issues, error: issuesError } = await admin
+    .from("magazine_issues")
+    .select("*")
+    .order("publication_date", { ascending: false })
+    .limit(20);
+
+  if (issuesError) throw issuesError;
 
   return (
     <main className="page">
       <section className="panel stack">
         <h1 className="section-title">Admin</h1>
-        <p className="lead">Vista mínima para operar la beta: configuración, último envío y fallos recientes.</p>
+        <p className="lead">Operación manual de la revista mensual: cargar número, mandar prueba y publicar a suscriptores.</p>
+        {params.status ? <p className="notice">Resultado: {humanStatus(params.status)}</p> : null}
+      </section>
+
+      <section className="panel stack">
+        <h2>Nuevo número</h2>
+        <p className="muted">
+          Pegá el texto adaptado. Para separar capítulos, usá líneas tipo <code># Título del capítulo</code>.
+        </p>
+        <form className="form wide-form" action={createMagazineIssueAction}>
+          <input type="hidden" name="adminKey" value={adminKey} />
+          <div className="grid form-grid">
+            <label>
+              Número
+              <input required type="number" min="1" name="issueNumber" placeholder="14" />
+            </label>
+            <label>
+              Título
+              <input required name="title" placeholder="Abril 2026" />
+            </label>
+            <label>
+              Fecha
+              <input required type="date" name="publicationDate" />
+            </label>
+          </div>
+          <label>
+            Archivo fuente
+            <input name="sourceFilename" placeholder="14_abril.pdf" />
+          </label>
+          <label>
+            Texto adaptado
+            <textarea required name="sourceText" rows={18} placeholder="# Editorial&#10;&#10;Texto...&#10;&#10;# Nota principal&#10;&#10;Texto..." />
+          </label>
+          <button className="button" type="submit">
+            Guardar número
+          </button>
+        </form>
+      </section>
+
+      <section className="panel stack">
+        <h2>Números</h2>
         <table>
           <thead>
             <tr>
-              <th>Cuenta</th>
+              <th>Número</th>
+              <th>Título</th>
+              <th>Estado</th>
+              <th>Prueba</th>
+              <th>Publicar</th>
+            </tr>
+          </thead>
+          <tbody>
+            {((issues ?? []) as MagazineIssue[]).map((issue) => (
+              <tr key={issue.id}>
+                <td>#{issue.issue_number}</td>
+                <td>
+                  <strong>{issue.title}</strong>
+                  <br />
+                  <span className="muted">{new Date(`${issue.publication_date}T12:00:00-03:00`).toLocaleDateString("es-AR")} · {issue.source_filename ?? "sin archivo"}</span>
+                </td>
+                <td>
+                  <span className={`status ${issue.status === "sent" ? "ok" : ""}`}>{issue.status}</span>
+                  <br />
+                  <span className="muted">Test: {issue.last_test_at ? new Date(issue.last_test_at).toLocaleString("es-AR") : "no"}</span>
+                </td>
+                <td>
+                  <form className="inline-form" action={sendMagazineTestAction}>
+                    <input type="hidden" name="adminKey" value={adminKey} />
+                    <input type="hidden" name="issueId" value={issue.id} />
+                    <input required type="email" name="kindleEmail" placeholder="test@kindle.com" />
+                    <button className="button secondary" type="submit">Enviar prueba</button>
+                  </form>
+                </td>
+                <td>
+                  <form action={sendMagazineIssueAction}>
+                    <input type="hidden" name="adminKey" value={adminKey} />
+                    <input type="hidden" name="issueId" value={issue.id} />
+                    <button className="button" type="submit">Enviar a todos</button>
+                  </form>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </section>
+
+      <section className="panel stack">
+        <h2>Suscriptores</h2>
+        <p className="lead">Direcciones activas y últimos fallos.</p>
+        <table>
+          <thead>
+            <tr>
               <th>Kindle</th>
               <th>Estado</th>
               <th>Último envío</th>
@@ -34,7 +131,6 @@ export default async function AdminPage({ searchParams }: { searchParams: Promis
           <tbody>
             {((subscriptions ?? []) as Subscription[]).map((subscription) => (
               <tr key={subscription.id}>
-                <td>Sin cuenta</td>
                 <td>{subscription.kindle_email}</td>
                 <td>
                   <span className={`status ${subscription.delivery_enabled && !subscription.last_failure_at ? "ok" : "bad"}`}>
@@ -50,4 +146,15 @@ export default async function AdminPage({ searchParams }: { searchParams: Promis
       </section>
     </main>
   );
+}
+
+function humanStatus(status: string) {
+  if (status === "issue-saved") return "número guardado";
+  if (status === "test-sent") return "prueba enviada";
+  if (status.startsWith("send-")) {
+    const [, sent, failed, skipped] = status.split("-");
+    return `envío terminado: ${sent} enviados, ${failed} fallidos, ${skipped} omitidos`;
+  }
+
+  return status;
 }

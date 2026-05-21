@@ -4,7 +4,7 @@ import "./globals.css";
 
 export const metadata: Metadata = {
   title: "Kindle421",
-  description: "Ediciones diarias de 421.news para Kindle.",
+  description: "Revista 421 mensual adaptada para Kindle.",
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

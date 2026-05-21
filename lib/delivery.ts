@@ -1,8 +1,9 @@
 import { buildEdition } from "@/lib/edition";
-import { notifyOperator, sendKindleEdition } from "@/lib/email";
+import { buildMagazineEdition } from "@/lib/magazine";
+import { notifyOperator, sendKindleEdition, sendMagazineEdition } from "@/lib/email";
 import { fetch421Feed, selectNewArticles } from "@/lib/feed";
 import { createSupabaseAdminClient } from "@/lib/supabase/server";
-import { DeliveryResult, Subscription } from "@/lib/types";
+import { DeliveryResult, MagazineIssue, Subscription } from "@/lib/types";
 
 const DAILY_SEND_LIMIT = 1;
 const MAX_ARTICLES_PER_EDITION = 6;
@@ -27,6 +28,147 @@ export async function runDailyDelivery(): Promise<DeliveryResult[]> {
 
   for (const subscription of (subscriptions ?? []) as Subscription[]) {
     results.push(await deliverToSubscription(subscription, articles));
+  }
+
+  return results;
+}
+
+export async function sendMagazineTest(issueId: string, kindleEmail: string) {
+  const supabase = createSupabaseAdminClient();
+  const { data: issue, error } = await supabase
+    .from("magazine_issues")
+    .select("*")
+    .eq("id", issueId)
+    .single();
+
+  if (error) throw error;
+
+  const edition = await buildMagazineEdition(issue as MagazineIssue);
+
+  await sendMagazineEdition({
+    to: kindleEmail,
+    filename: edition.filename,
+    epub: edition.buffer,
+    issueTitle: issue.title,
+    issueNumber: issue.issue_number,
+    chapterCount: edition.chapterCount,
+  });
+
+  const { error: updateError } = await supabase
+    .from("magazine_issues")
+    .update({
+      status: "ready",
+      epub_fingerprint: edition.fingerprint,
+      last_test_at: new Date().toISOString(),
+    })
+    .eq("id", issueId);
+
+  if (updateError) throw updateError;
+}
+
+export async function sendMagazineIssue(issueId: string): Promise<DeliveryResult[]> {
+  const supabase = createSupabaseAdminClient();
+  const { data: issue, error: issueError } = await supabase
+    .from("magazine_issues")
+    .select("*")
+    .eq("id", issueId)
+    .single();
+
+  if (issueError) throw issueError;
+
+  const { data: subscriptions, error: subscriptionsError } = await supabase
+    .from("subscriptions")
+    .select("*")
+    .eq("delivery_enabled", true);
+
+  if (subscriptionsError) throw subscriptionsError;
+
+  const edition = await buildMagazineEdition(issue as MagazineIssue);
+  const results: DeliveryResult[] = [];
+
+  for (const subscription of (subscriptions ?? []) as Subscription[]) {
+    const { data: existingDelivery, error: existingError } = await supabase
+      .from("magazine_deliveries")
+      .select("id")
+      .eq("issue_id", issueId)
+      .eq("subscription_id", subscription.id)
+      .eq("status", "sent")
+      .maybeSingle();
+
+    if (existingError) throw existingError;
+
+    if (existingDelivery) {
+      results.push({ status: "skipped", subscriptionId: subscription.id, reason: "numero ya enviado" });
+      continue;
+    }
+
+    try {
+      await sendMagazineEdition({
+        to: subscription.kindle_email,
+        filename: edition.filename,
+        epub: edition.buffer,
+        issueTitle: issue.title,
+        issueNumber: issue.issue_number,
+        chapterCount: edition.chapterCount,
+      });
+
+      const now = new Date().toISOString();
+      const { error: insertError } = await supabase.from("magazine_deliveries").insert({
+        issue_id: issueId,
+        subscription_id: subscription.id,
+        kindle_email: subscription.kindle_email,
+        status: "sent",
+        sent_at: now,
+      });
+
+      if (insertError) throw insertError;
+
+      await supabase
+        .from("subscriptions")
+        .update({
+          last_edition_fingerprint: edition.fingerprint,
+          last_success_at: now,
+          last_failure_at: null,
+          last_failure_message: null,
+        })
+        .eq("id", subscription.id);
+
+      results.push({ status: "sent", subscriptionId: subscription.id, issueId });
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Fallo desconocido";
+
+      await supabase.from("magazine_deliveries").insert({
+        issue_id: issueId,
+        subscription_id: subscription.id,
+        kindle_email: subscription.kindle_email,
+        status: "failed",
+        error_message: message,
+      });
+
+      await supabase
+        .from("subscriptions")
+        .update({
+          last_failure_at: new Date().toISOString(),
+          last_failure_message: message,
+        })
+        .eq("id", subscription.id);
+
+      await notifyOperator(`Fallo enviando Revista 421 #${issue.issue_number} a ${subscription.kindle_email} (${subscription.id}): ${message}`);
+      results.push({ status: "failed", subscriptionId: subscription.id, error: message });
+    }
+  }
+
+  if (results.some((result) => result.status === "sent")) {
+    const { error: updateError } = await supabase
+      .from("magazine_issues")
+      .update({
+        status: "sent",
+        epub_fingerprint: edition.fingerprint,
+        sent_at: new Date().toISOString(),
+      })
+      .eq("id", issueId);
+
+    if (updateError) throw updateError;
   }
 
   return results;

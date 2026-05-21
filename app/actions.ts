@@ -2,8 +2,10 @@
 
 import { redirect } from "next/navigation";
 import { normalizeEmail } from "@/lib/security";
+import { getEnv } from "@/lib/env";
+import { sendMagazineIssue, sendMagazineTest } from "@/lib/delivery";
 import { createSupabaseAdminClient } from "@/lib/supabase/server";
-import { subscriptionSchema } from "@/lib/validation";
+import { magazineIssueSchema, magazineSendSchema, magazineTestSchema, subscriptionSchema } from "@/lib/validation";
 import { verifyCaptcha } from "@/lib/security";
 
 export async function subscribeAction(formData: FormData) {
@@ -50,4 +52,81 @@ export async function subscribeAction(formData: FormData) {
   }
 
   redirect("/?subscribed=1#suscribirme");
+}
+
+export async function createMagazineIssueAction(formData: FormData) {
+  assertAdmin(formData);
+
+  const parsed = magazineIssueSchema.safeParse({
+    issueNumber: formData.get("issueNumber"),
+    title: formData.get("title"),
+    publicationDate: formData.get("publicationDate"),
+    sourceFilename: formData.get("sourceFilename"),
+    sourceText: formData.get("sourceText"),
+  });
+
+  if (!parsed.success) redirect(adminUrl("issue-invalid"));
+
+  const supabase = createSupabaseAdminClient();
+  const slug = `revista-421-${parsed.data.issueNumber}`;
+
+  const { error } = await supabase.from("magazine_issues").upsert(
+    {
+      issue_number: parsed.data.issueNumber,
+      title: parsed.data.title,
+      slug,
+      publication_date: parsed.data.publicationDate,
+      source_filename: parsed.data.sourceFilename || null,
+      source_text: parsed.data.sourceText,
+      status: "draft",
+      epub_fingerprint: null,
+    },
+    { onConflict: "issue_number" },
+  );
+
+  if (error) {
+    console.error("Kindle421 issue upsert error", error);
+    redirect(adminUrl(`issue-db-${encodeURIComponent(error.code ?? "unknown")}`));
+  }
+
+  redirect(adminUrl("issue-saved"));
+}
+
+export async function sendMagazineTestAction(formData: FormData) {
+  assertAdmin(formData);
+
+  const parsed = magazineTestSchema.safeParse({
+    issueId: formData.get("issueId"),
+    kindleEmail: formData.get("kindleEmail"),
+  });
+
+  if (!parsed.success) redirect(adminUrl("test-invalid"));
+
+  await sendMagazineTest(parsed.data.issueId, normalizeEmail(parsed.data.kindleEmail));
+  redirect(adminUrl("test-sent"));
+}
+
+export async function sendMagazineIssueAction(formData: FormData) {
+  assertAdmin(formData);
+
+  const parsed = magazineSendSchema.safeParse({
+    issueId: formData.get("issueId"),
+  });
+
+  if (!parsed.success) redirect(adminUrl("send-invalid"));
+
+  const results = await sendMagazineIssue(parsed.data.issueId);
+  const sent = results.filter((result) => result.status === "sent").length;
+  const failed = results.filter((result) => result.status === "failed").length;
+  const skipped = results.filter((result) => result.status === "skipped").length;
+
+  redirect(adminUrl(`send-${sent}-${failed}-${skipped}`));
+}
+
+function assertAdmin(formData: FormData) {
+  if (formData.get("adminKey") !== getEnv().CRON_SECRET) redirect("/");
+}
+
+function adminUrl(status: string) {
+  return `/admin?key=${encodeURIComponent(getEnv().CRON_SECRET)}&status=${encodeURIComponent(status)}`;
 }

@@ -1,13 +1,13 @@
 # Kindle421
 
-Kindle421 es una beta gratuita para recibir una edición diaria de `421.news` en Kindle. La v1 soporta solo el RSS público en español, genera un EPUB minimalista y lo envía al `@kindle.com` a las 06:00 hora Argentina.
+Kindle421 es una beta gratuita para recibir la Revista 421 mensual en Kindle. La v1 carga manualmente cada PDF oficial, genera una adaptación EPUB minimalista y la envía al `@kindle.com` de cada suscriptor.
 
 ## Stack
 
 - Next.js + TypeScript
 - Supabase Postgres como base de datos
 - Resend para emails
-- Vercel para frontend, admin y cron serverless
+- Vercel para frontend y admin
 
 ## Setup local
 
@@ -42,24 +42,22 @@ npm run dev
 - Debe autorizar manualmente el remitente `EMAIL_FROM` en Amazon.
 - La app guarda una suscripción activa en `public.subscriptions`.
 
-## Job diario
+## Flujo editorial mensual
 
-`GET /api/cron/daily`:
+- El admin entra a `/admin?key=$CRON_SECRET`.
+- Pega el texto adaptado del número mensual. Para separar capítulos usa líneas `# Título`.
+- Guarda el número en `public.magazine_issues`.
+- Envía una prueba a un Kindle.
+- Cuando la prueba está aprobada, envía el número a todos los suscriptores.
+- Cada entrega queda registrada en `public.magazine_deliveries`.
 
-- Lee `https://www.421.news/es/rss/`.
-- Usa `content:encoded` del feed, con `description` como fallback.
-- Ordena artículos del más nuevo al más viejo.
-- Selecciona artículos nuevos desde el último fingerprint enviado a cada suscripción.
-- Si no hay novedades, no genera ni envía nada.
-- Genera EPUB con portada, índice y capítulos.
-- Envía por Resend con reintentos.
-- Marca último éxito o último fallo visible para admin.
-
-Invocación manual:
+Para extraer un borrador local desde PDF:
 
 ```bash
-curl -H "Authorization: Bearer $CRON_SECRET" http://localhost:3000/api/cron/daily
+node scripts/pdf-to-magazine-text.mjs ~/Downloads/14_abril.pdf > abril-2026.txt
 ```
+
+Ese texto se revisa manualmente antes de pegarlo en el admin.
 
 ## Admin
 
@@ -69,18 +67,17 @@ El admin mínimo está en:
 /admin?key=$CRON_SECRET
 ```
 
-Muestra suscripciones, estado, último envío y últimos fallos. Es deliberadamente simple para beta chica.
+Permite cargar números, enviar pruebas, publicar a suscriptores y ver suscripciones/fallos. Es deliberadamente simple para beta chica.
 
 ## Deploy en Vercel
 
 1. Cargá las mismas variables de entorno en Vercel.
 2. Asegurate de que `NEXT_PUBLIC_SITE_URL` apunte al dominio productivo.
-3. `vercel.json` ejecuta `/api/cron/daily` todos los días a las `09:00 UTC`, equivalente a `06:00 America/Argentina/Buenos_Aires`.
-4. Para Kindle real necesitás un dominio verificado en Resend y autorizar ese remitente en Amazon.
+3. Para Kindle real necesitás un dominio verificado en Resend y autorizar ese remitente en Amazon.
 
-## Limitación Kindle
+## Comportamiento Kindle
 
-Kindle421 envía una nueva edición diaria. Amazon/Kindle no garantiza que esa entrega reemplace la edición anterior en la biblioteca del usuario. Esta limitación está documentada en la landing y docs.
+Kindle421 envía cada número mensual como un EPUB nuevo. Amazon/Kindle lo muestra como un libro/documento independiente, que es el comportamiento esperado para una revista mensual.
 
 ## Datos persistidos
 
@@ -88,9 +85,10 @@ La tabla `subscriptions` guarda solo lo mínimo:
 
 - dirección `@kindle.com`;
 - estado de envío;
-- último artículo/fingerprint procesado;
-- fingerprint de última edición;
+- números de revista y texto fuente adaptado;
+- entregas por número/suscriptor;
+- fingerprint de última edición enviada;
 - último envío exitoso;
 - último fallo.
 
-No se versionan EPUBs en el repo ni se mantiene una biblioteca histórica de ediciones.
+No se versionan EPUBs en el repo. El PDF original no se sube todavía a storage en v1; se guarda el texto adaptado.

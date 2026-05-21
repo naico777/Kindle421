@@ -14,6 +14,33 @@ export type Subscription = {
   updated_at: string;
 };
 
+export type MagazineIssue = {
+  id: string;
+  issue_number: number;
+  title: string;
+  slug: string;
+  publication_date: string;
+  status: "draft" | "ready" | "sent";
+  source_filename: string | null;
+  source_text: string;
+  epub_fingerprint: string | null;
+  last_test_at: string | null;
+  sent_at: string | null;
+  created_at: string;
+  updated_at: string;
+};
+
+export type MagazineDelivery = {
+  id: string;
+  issue_id: string;
+  subscription_id: string;
+  kindle_email: string;
+  status: "sent" | "failed";
+  error_message: string | null;
+  sent_at: string | null;
+  created_at: string;
+};
+
 export type FeedArticle = {
   guid: string;
   title: string;
@@ -25,6 +52,6 @@ export type FeedArticle = {
 };
 
 export type DeliveryResult =
-  | { status: "sent"; subscriptionId: string; articleCount: number }
+  | { status: "sent"; subscriptionId: string; articleCount?: number; issueId?: string }
   | { status: "skipped"; subscriptionId: string; reason: string }
   | { status: "failed"; subscriptionId: string; error: string };

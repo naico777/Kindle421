@@ -40,6 +40,44 @@ export async function sendKindleEdition(params: {
   });
 }
 
+export async function sendMagazineEdition(params: {
+  to: string;
+  filename: string;
+  epub: Buffer;
+  issueTitle: string;
+  issueNumber: number;
+  chapterCount: number;
+}) {
+  const env = getEnv();
+  const resend = new Resend(env.RESEND_API_KEY);
+  const subject = `Revista 421 #${params.issueNumber}: ${params.issueTitle}`;
+
+  return retry(async () => {
+    const result = await resend.emails.send({
+      from: env.EMAIL_FROM,
+      to: params.to,
+      subject,
+      text: [
+        "Hola,",
+        "",
+        `Adjuntamos la Revista 421 #${params.issueNumber}, adaptada para Kindle.`,
+        `Incluye ${params.chapterCount} capitulo${params.chapterCount === 1 ? "" : "s"}.`,
+        "",
+        "Cada numero mensual llega como un documento/libro nuevo en tu biblioteca Kindle.",
+      ].join("\n"),
+      attachments: [
+        {
+          filename: params.filename,
+          content: params.epub.toString("base64"),
+        },
+      ],
+    });
+
+    if (result.error) throw new Error(result.error.message);
+    return result;
+  });
+}
+
 export async function notifyFailure(params: { to: string; message: string }) {
   const env = getEnv();
   const resend = new Resend(env.RESEND_API_KEY);

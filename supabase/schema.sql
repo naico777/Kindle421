@@ -24,6 +24,47 @@ create index if not exists subscriptions_last_failure_idx
   on public.subscriptions (last_failure_at)
   where last_failure_at is not null;
 
+create table if not exists public.magazine_issues (
+  id uuid primary key default gen_random_uuid(),
+  issue_number integer not null unique,
+  title text not null,
+  slug text not null unique,
+  publication_date date not null,
+  status text not null default 'draft',
+  source_filename text,
+  source_text text not null,
+  epub_fingerprint text,
+  last_test_at timestamptz,
+  sent_at timestamptz,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now(),
+  constraint magazine_issues_status_valid check (status in ('draft', 'ready', 'sent')),
+  constraint magazine_issues_source_text_present check (length(trim(source_text)) > 0)
+);
+
+create index if not exists magazine_issues_publication_date_idx
+  on public.magazine_issues (publication_date desc);
+
+create table if not exists public.magazine_deliveries (
+  id uuid primary key default gen_random_uuid(),
+  issue_id uuid not null references public.magazine_issues(id) on delete cascade,
+  subscription_id uuid not null references public.subscriptions(id) on delete cascade,
+  kindle_email text not null,
+  status text not null,
+  error_message text,
+  sent_at timestamptz,
+  created_at timestamptz not null default now(),
+  constraint magazine_deliveries_status_valid check (status in ('sent', 'failed')),
+  constraint magazine_deliveries_kindle_email_valid check (kindle_email ~* '^[^@\s]+@kindle\.com$')
+);
+
+create unique index if not exists magazine_deliveries_issue_subscription_sent_idx
+  on public.magazine_deliveries (issue_id, subscription_id)
+  where status = 'sent';
+
+create index if not exists magazine_deliveries_issue_idx
+  on public.magazine_deliveries (issue_id);
+
 create or replace function public.set_updated_at()
 returns trigger
 language plpgsql
@@ -39,7 +80,14 @@ create trigger subscriptions_set_updated_at
 before update on public.subscriptions
 for each row execute function public.set_updated_at();
 
+drop trigger if exists magazine_issues_set_updated_at on public.magazine_issues;
+create trigger magazine_issues_set_updated_at
+before update on public.magazine_issues
+for each row execute function public.set_updated_at();
+
 alter table public.subscriptions enable row level security;
+alter table public.magazine_issues enable row level security;
+alter table public.magazine_deliveries enable row level security;
 
 -- No public table policies are needed. The app writes subscriptions from server
 -- actions using the Supabase service role, so visitors never receive DB access.
@@ -121,5 +169,7 @@ $$;
 -- Explicit grants for PostgREST roles used by Supabase API.
 grant usage on schema public to anon, authenticated, service_role;
 grant all privileges on table public.subscriptions to service_role;
+grant all privileges on table public.magazine_issues to service_role;
+grant all privileges on table public.magazine_deliveries to service_role;
 grant all privileges on table public.rate_limits to service_role;
 grant execute on function public.touch_rate_limit(text, integer, integer) to anon, authenticated, service_role;
