@@ -1,5 +1,4 @@
 import Image from "next/image";
-import Link from "next/link";
 import { subscribeAction } from "@/app/actions";
 import { CopyChip } from "@/app/copy-chip";
 
@@ -15,14 +14,6 @@ export default async function HomePage({
       <a className="skip" href="#suscribirme">
         Saltar a la suscripción
       </a>
-
-      <header className="topbar">
-        <Link className="topbar-brand" href="/">
-          <Image className="logo" src="/kindle421/logo-421.png" alt="421" width={84} height={40} priority />
-          <span className="brand-name">Kindle421</span>
-        </Link>
-        <span className="tagline mono">Revista mensual · Optimizada para e-reader</span>
-      </header>
 
       <section className="hero">
         <section className="hero-intro">
@@ -68,7 +59,7 @@ export default async function HomePage({
               <div className="step-num" aria-hidden="true">
                 1
               </div>
-              <h3 className="step-title">Autorizanos en Amazon</h3>
+              <h3 className="step-title">Configurá Amazon</h3>
               <p className="step-desc">
                 Abrí{" "}
                 <a
@@ -79,19 +70,16 @@ export default async function HomePage({
                 >
                   tu configuración de Kindle
                 </a>{" "}
-                y agregá a <CopyChip value="envios@kindle421.xyz" /> como remitente.
+                y agregá a <CopyChip value="envios@kindle421.xyz" />.
               </p>
             </li>
             <li className="step">
               <div className="step-num" aria-hidden="true">
                 2
               </div>
-              <h3 className="step-title">Danos el mail de tu Kindle</h3>
+              <h3 className="step-title">Suscribite a Kindle421</h3>
               <p className="step-desc">
-                Suscribite al envío mensual poniendo tu dirección <code className="kindle-domain">@kindle.com</code>{" "}
-                <a className="step-jump" href="#suscribirme">
-                  acá abajo →
-                </a>
+                Dejá tu dirección <code className="kindle-domain">@kindle.com</code> acá abajo, es gratis.
               </p>
             </li>
             <li className="step">
@@ -103,14 +91,7 @@ export default async function HomePage({
             </li>
           </ol>
 
-          <section className="subscribe" id="suscribirme" aria-labelledby="subscribe-title">
-            <h2 className="subscribe-title display" id="subscribe-title">
-              Suscribirme
-            </h2>
-            <p className="subscribe-lede">
-              Dejá tu dirección <code className="kindle-domain dark">@kindle.com</code> y activá la suscripción. Antes
-              seguí los pasos de arriba para autorizarnos en Amazon.
-            </p>
+          <section className="subscribe" id="suscribirme" aria-label="Suscripción a Kindle421">
             {params.subscribed ? (
               <p className="subscribe-fineprint is-success" role="status">
                 {params.delivery === "sent"
@@ -132,7 +113,6 @@ export default async function HomePage({
             <form className="subscribe-form" action={subscribeAction}>
               <input type="hidden" name="acceptedChecklist" value="on" />
               <label className="subscribe-field">
-                <span className="subscribe-label mono">Dirección Kindle</span>
                 <input
                   type="email"
                   name="kindleEmail"
@@ -158,6 +138,7 @@ export default async function HomePage({
           </section>
         </section>
       </section>
+      <footer className="home-footer mono">Reconstruido con 🥛 en Buenos Aires</footer>
     </main>
   );
 }
