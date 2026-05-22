@@ -431,7 +431,7 @@ body:has(.kindle421-home) .site-header {
   grid-area: device;
   position: relative;
   background: var(--home-hero-grad);
-  padding: clamp(48px, 6vw, 72px) clamp(24px, 4vw, 56px) clamp(40px, 5vw, 56px);
+  padding: clamp(54px, 6vw, 72px) clamp(24px, 4vw, 56px) clamp(30px, 4vw, 48px);
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -459,6 +459,12 @@ body:has(.kindle421-home) .site-header {
   font-weight: 600;
 }
 
+.kindle421-home .device-labels .mono:last-child {
+  max-width: 18em;
+  text-align: right;
+  font-weight: 700;
+}
+
 .kindle421-home .kindle {
   width: 100%;
   max-width: 430px;
@@ -472,6 +478,32 @@ body:has(.kindle421-home) .site-header {
   position: relative;
   z-index: 1;
 }
+
+.kindle421-home .issue-credits {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 6px 24px;
+  margin: clamp(16px, 2vw, 22px) 0 0;
+  color: var(--black);
+  font-size: clamp(13px, 0.4vw + 0.8rem, 15px);
+}
+
+.kindle421-home .issue-credits div {
+  display: inline-flex;
+  gap: 4px;
+}
+
+.kindle421-home .issue-credits dt {
+  font-weight: 800;
+}
+
+.kindle421-home .issue-credits dd {
+  margin: 0;
+}
+
 
 .kindle421-home .kindle-screen {
   width: 100%;
@@ -497,8 +529,8 @@ body:has(.kindle421-home) .site-header {
 
 .kindle421-home .kindle-watermark {
   position: absolute;
-  right: -8%;
-  bottom: -18%;
+  right: -10%;
+  bottom: -22%;
   font-family: var(--home-font-display);
   font-weight: 800;
   font-style: italic;
@@ -506,7 +538,7 @@ body:has(.kindle421-home) .site-header {
   line-height: 1;
   letter-spacing: -0.04em;
   color: var(--black);
-  opacity: 0.05;
+  opacity: 0.035;
   pointer-events: none;
   user-select: none;
   z-index: 0;

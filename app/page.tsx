@@ -33,8 +33,8 @@ export default async function HomePage({
 
         <aside className="device-panel" aria-label="Última entrega en Kindle">
           <div className="device-labels">
-            <span className="mono">Última entrega</span>
-            <span className="mono dim">#14 · Abril 2026</span>
+            <span className="mono">Última entrega: Abril &apos;26</span>
+            <span className="mono dim">Especial Inteligencia Artificial</span>
           </div>
           <div className="kindle">
             <div className="kindle-screen">
@@ -48,6 +48,16 @@ export default async function HomePage({
               <div className="kindle-scanlines" aria-hidden="true" />
             </div>
           </div>
+          <dl className="issue-credits">
+            <div>
+              <dt>Ilustración de portada:</dt>
+              <dd>Martín Pouso</dd>
+            </div>
+            <div>
+              <dt>Diseño:</dt>
+              <dd>Pablo Tempesta</dd>
+            </div>
+          </dl>
           <div className="kindle-watermark" aria-hidden="true">
             14
           </div>
@@ -95,8 +105,8 @@ export default async function HomePage({
             {params.subscribed ? (
               <p className="subscribe-fineprint is-success" role="status">
                 {params.delivery === "sent"
-                  ? "Listo. Guardamos tu dirección Kindle y ya te enviamos el último número."
-                  : "Listo. Guardamos tu dirección Kindle y la suscripción quedó activa."}
+                  ? "Listorti. en 5' refrescá el Kindle y te va a descargar la revista"
+                  : "Listorti. Guardamos tu dirección Kindle y la suscripción quedó activa."}
               </p>
             ) : null}
             {params.error ? (
@@ -130,11 +140,6 @@ export default async function HomePage({
                 </span>
               </button>
             </form>
-            {!params.subscribed && !params.error && params.test !== "sent" ? (
-              <p className="subscribe-fineprint" id="subscribe-status" role="status" aria-live="polite">
-                Sin spam. Te podés bajar cuando quieras.
-              </p>
-            ) : null}
           </section>
         </section>
       </section>
