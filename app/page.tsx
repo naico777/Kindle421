@@ -34,7 +34,7 @@ export default async function HomePage({
         <aside className="device-panel" aria-label="Última entrega en Kindle">
           <div className="device-labels">
             <span className="mono">
-              <strong>Última Entrega:</strong> Abril &apos;26: Especial Inteligencia Artificial
+              <strong>Última Entrega:</strong> Especial Inteligencia Artificial
             </span>
           </div>
           <div className="kindle">
