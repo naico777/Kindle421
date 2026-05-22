@@ -1,4 +1,5 @@
 import Image from "next/image";
+import Script from "next/script";
 import { subscribeAction } from "@/app/actions";
 import { CopyChip } from "@/app/copy-chip";
 
@@ -8,9 +9,13 @@ export default async function HomePage({
   searchParams: Promise<{ subscribed?: string; delivery?: string; error?: string; test?: string }>;
 }) {
   const params = await searchParams;
+  const turnstileSiteKey = process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY?.trim();
 
   return (
     <main className="kindle421-home">
+      {turnstileSiteKey ? (
+        <Script src="https://challenges.cloudflare.com/turnstile/v0/api.js" strategy="afterInteractive" />
+      ) : null}
       <a className="skip" href="#suscribirme">
         Saltar a la suscripción
       </a>
@@ -134,6 +139,15 @@ export default async function HomePage({
                   title="Tiene que terminar en @kindle.com"
                 />
               </label>
+              {turnstileSiteKey ? (
+                <div className="turnstile-wrap">
+                  <div
+                    className="cf-turnstile"
+                    data-sitekey={turnstileSiteKey}
+                    data-response-field-name="captchaToken"
+                  />
+                </div>
+              ) : null}
               <button className="subscribe-submit" type="submit">
                 <span className="subscribe-submit-label">Activar suscripción</span>
                 <span className="subscribe-submit-arrow" aria-hidden="true">
@@ -144,7 +158,17 @@ export default async function HomePage({
           </section>
         </section>
       </section>
-      <footer className="home-footer mono">Reconstruido con 🥛 en Buenos Aires</footer>
+      <footer className="home-footer mono">
+        Aporte de{" "}
+        <a href="https://x.com/nicolaskneler" target="_blank" rel="noreferrer noopener">
+          @nicolaskneler
+        </a>{" "}
+        para la comunidad 421. Ver repo en{" "}
+        <a href="https://github.com/naico777/Kindle421" target="_blank" rel="noreferrer noopener">
+          Github
+        </a>
+        .
+      </footer>
     </main>
   );
 }

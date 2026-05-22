@@ -38,7 +38,7 @@ npm run dev
 
 ## Flujo editorial mensual
 
-- El admin entra a `/admin?key=$CRON_SECRET`.
+- El admin entra a `/admin` y usa `CRON_SECRET` como clave operativa.
 - Pega el texto adaptado del número mensual. Para separar capítulos usa líneas `# Título`.
 - Guarda el número en `public.magazine_issues`.
 - Envía una prueba a un Kindle.
@@ -71,11 +71,20 @@ Cada nota se renderiza con una página de presentación: primera imagen detectad
 El admin mínimo está en:
 
 ```text
-/admin?key=$CRON_SECRET
+/admin
 ```
 
 Permite cargar números, enviar pruebas, publicar a suscriptores y ver suscripciones/fallos. Es deliberadamente simple para beta chica.
 Tratamos `CRON_SECRET` como una contraseña: no lo compartas públicamente y rotalo si se filtra.
+
+## CAPTCHA opcional
+
+Para activar Cloudflare Turnstile en el formulario público, configurá ambas variables:
+
+- `NEXT_PUBLIC_TURNSTILE_SITE_KEY`: site key pública de Turnstile.
+- `CAPTCHA_SECRET`: secret key privada de Turnstile.
+
+CAPTCHA se activa solo si están configuradas las dos variables. Si falta cualquiera de las dos, el formulario funciona sin CAPTCHA y mantiene el rate limit por email.
 
 ## Automatización
 
@@ -88,6 +97,18 @@ de enviarlo a todos los suscriptores.
 2. Asegurate de que `NEXT_PUBLIC_SITE_URL` apunte al dominio productivo.
 3. Para Kindle real necesitás un dominio verificado en Resend y autorizar ese remitente en Amazon.
 4. Ejecutá `supabase/schema.sql` en la base productiva antes del primer envío.
+
+## Checklist antes de publicar
+
+```bash
+npm audit --audit-level=low
+npm run verify
+```
+
+- No commitear `.env.local` ni secretos reales. El repo solo debe tener `.env.example` con placeholders.
+- Usar un `CRON_SECRET` largo y único en Vercel. Si alguna vez se pegó en un lugar público, rotarlo antes de publicar.
+- Revisar que las variables productivas de Supabase y Resend correspondan al proyecto correcto.
+- Confirmar que el dominio productivo tenga HTTPS y que `NEXT_PUBLIC_SITE_URL` use ese dominio.
 
 ## Comportamiento Kindle
 

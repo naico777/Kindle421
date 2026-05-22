@@ -196,6 +196,10 @@ input {
   padding: 0.9rem 1rem;
 }
 
+input[type="password"] {
+  min-height: 3rem;
+}
+
 textarea {
   width: 100%;
   border: 1px solid var(--line);
@@ -756,6 +760,17 @@ body:has(.kindle421-home) .site-header {
 
 .kindle421-home .subscribe-submit:active {
   transform: translateY(1px);
+}
+
+.kindle421-home .turnstile-wrap {
+  display: flex;
+  justify-content: center;
+  min-height: 4.4rem;
+}
+
+.kindle421-home .subscribe-form:has(.turnstile-wrap) .turnstile-wrap,
+.kindle421-home .subscribe-form:has(.turnstile-wrap) .subscribe-submit {
+  grid-column: 1 / -1;
 }
 
 .kindle421-home .subscribe-fineprint {

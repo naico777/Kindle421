@@ -2,7 +2,7 @@
 
 import { redirect } from "next/navigation";
 import { normalizeEmail } from "@/lib/security";
-import { getEnv } from "@/lib/env";
+import { clearAdminSession, createAdminSession, hasAdminSession, isAdminKey } from "@/lib/admin-auth";
 import { sendLatestMagazineIssueToSubscription, sendMagazineIssue, sendMagazineTest } from "@/lib/delivery";
 import { createSupabaseAdminClient } from "@/lib/supabase/server";
 import { magazineIssueSchema, magazineSendSchema, magazineTestSchema, subscriptionSchema } from "@/lib/validation";
@@ -68,7 +68,7 @@ export async function subscribeAction(formData: FormData) {
 }
 
 export async function createMagazineIssueAction(formData: FormData) {
-  assertAdmin(formData);
+  await assertAdmin();
 
   const parsed = magazineIssueSchema.safeParse({
     issueNumber: formData.get("issueNumber"),
@@ -108,7 +108,7 @@ export async function createMagazineIssueAction(formData: FormData) {
 }
 
 export async function sendMagazineTestAction(formData: FormData) {
-  assertAdmin(formData);
+  await assertAdmin();
 
   const parsed = magazineTestSchema.safeParse({
     issueId: formData.get("issueId"),
@@ -122,7 +122,7 @@ export async function sendMagazineTestAction(formData: FormData) {
 }
 
 export async function sendMagazineIssueAction(formData: FormData) {
-  assertAdmin(formData);
+  await assertAdmin();
 
   const parsed = magazineSendSchema.safeParse({
     issueId: formData.get("issueId"),
@@ -138,10 +138,22 @@ export async function sendMagazineIssueAction(formData: FormData) {
   redirect(adminUrl(`send-${sent}-${failed}-${skipped}`));
 }
 
-function assertAdmin(formData: FormData) {
-  if (formData.get("adminKey") !== getEnv().CRON_SECRET) redirect("/");
+export async function loginAdminAction(formData: FormData) {
+  if (!isAdminKey(formData.get("adminKey"))) redirect(adminUrl("auth-invalid"));
+
+  await createAdminSession();
+  redirect("/admin");
+}
+
+export async function logoutAdminAction() {
+  await clearAdminSession();
+  redirect("/");
+}
+
+async function assertAdmin() {
+  if (!(await hasAdminSession())) redirect(adminUrl("auth-required"));
 }
 
 function adminUrl(status: string) {
-  return `/admin?key=${encodeURIComponent(getEnv().CRON_SECRET)}&status=${encodeURIComponent(status)}`;
+  return `/admin?status=${encodeURIComponent(status)}`;
 }

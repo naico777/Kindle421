@@ -4,6 +4,7 @@ const envSchema = z.object({
   NEXT_PUBLIC_SITE_URL: z.string().trim().url().default("http://localhost:3000"),
   NEXT_PUBLIC_SUPABASE_URL: z.string().trim().url(),
   NEXT_PUBLIC_SUPABASE_ANON_KEY: z.string().min(1),
+  NEXT_PUBLIC_TURNSTILE_SITE_KEY: z.string().trim().optional(),
   SUPABASE_SERVICE_ROLE_KEY: z.string().min(1),
   RESEND_API_KEY: z.string().min(1),
   EMAIL_FROM: z.string().refine((value) => {

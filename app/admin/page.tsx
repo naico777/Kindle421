@@ -1,13 +1,38 @@
-import { redirect } from "next/navigation";
-import { createMagazineIssueAction, sendMagazineIssueAction, sendMagazineTestAction } from "@/app/actions";
-import { getEnv } from "@/lib/env";
+import {
+  createMagazineIssueAction,
+  loginAdminAction,
+  logoutAdminAction,
+  sendMagazineIssueAction,
+  sendMagazineTestAction,
+} from "@/app/actions";
+import { hasAdminSession } from "@/lib/admin-auth";
 import { createSupabaseAdminClient } from "@/lib/supabase/server";
 import { MagazineIssue, Subscription } from "@/lib/types";
 
-export default async function AdminPage({ searchParams }: { searchParams: Promise<{ key?: string; status?: string }> }) {
+export default async function AdminPage({ searchParams }: { searchParams: Promise<{ status?: string }> }) {
   const params = await searchParams;
-  const adminKey = getEnv().CRON_SECRET;
-  if (params.key !== adminKey) redirect("/");
+  const isAdmin = await hasAdminSession();
+
+  if (!isAdmin) {
+    return (
+      <main className="page">
+        <section className="panel stack">
+          <h1 className="section-title">Admin</h1>
+          <p className="lead">Entrá con la clave operativa para cargar y publicar números de Kindle421.</p>
+          {params.status ? <p className="notice">Resultado: {humanStatus(params.status)}</p> : null}
+          <form className="form" action={loginAdminAction}>
+            <label>
+              Clave admin
+              <input required name="adminKey" type="password" autoComplete="current-password" />
+            </label>
+            <button className="button" type="submit">
+              Entrar
+            </button>
+          </form>
+        </section>
+      </main>
+    );
+  }
 
   const admin = createSupabaseAdminClient();
   const { data: subscriptions, error: subscriptionsError } = await admin
@@ -32,6 +57,11 @@ export default async function AdminPage({ searchParams }: { searchParams: Promis
         <h1 className="section-title">Admin</h1>
         <p className="lead">Operación manual de la revista mensual: cargar número, mandar prueba y publicar a suscriptores.</p>
         {params.status ? <p className="notice">Resultado: {humanStatus(params.status)}</p> : null}
+        <form action={logoutAdminAction}>
+          <button className="link-button" type="submit">
+            Salir del admin
+          </button>
+        </form>
       </section>
 
       <section className="panel stack">
@@ -40,7 +70,6 @@ export default async function AdminPage({ searchParams }: { searchParams: Promis
           Pegá el texto adaptado. Para separar capítulos, usá líneas tipo <code># Título del capítulo</code>.
         </p>
         <form className="form wide-form" action={createMagazineIssueAction}>
-          <input type="hidden" name="adminKey" value={adminKey} />
           <div className="grid form-grid">
             <label>
               Número
@@ -104,7 +133,6 @@ export default async function AdminPage({ searchParams }: { searchParams: Promis
                 </td>
                 <td>
                   <form className="inline-form" action={sendMagazineTestAction}>
-                    <input type="hidden" name="adminKey" value={adminKey} />
                     <input type="hidden" name="issueId" value={issue.id} />
                     <input required type="email" name="kindleEmail" placeholder="test@kindle.com" />
                     <button className="button secondary" type="submit">Enviar prueba</button>
@@ -112,7 +140,6 @@ export default async function AdminPage({ searchParams }: { searchParams: Promis
                 </td>
                 <td>
                   <form action={sendMagazineIssueAction}>
-                    <input type="hidden" name="adminKey" value={adminKey} />
                     <input type="hidden" name="issueId" value={issue.id} />
                     <button className="button" type="submit">Enviar a todos</button>
                   </form>
@@ -156,6 +183,8 @@ export default async function AdminPage({ searchParams }: { searchParams: Promis
 }
 
 function humanStatus(status: string) {
+  if (status === "auth-invalid") return "clave admin inválida";
+  if (status === "auth-required") return "tenés que entrar al admin";
   if (status === "issue-saved") return "número guardado";
   if (status === "test-sent") return "prueba enviada";
   if (status.startsWith("send-")) {

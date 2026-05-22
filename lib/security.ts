@@ -10,9 +10,11 @@ export function normalizeEmail(email: string) {
 }
 
 export async function verifyCaptcha(token?: string) {
-  const secret = getEnv().CAPTCHA_SECRET;
+  const env = getEnv();
+  const secret = env.CAPTCHA_SECRET;
+  const siteKey = env.NEXT_PUBLIC_TURNSTILE_SITE_KEY;
 
-  if (!secret) return true;
+  if (!secret || !siteKey) return true;
   if (!token) return false;
 
   const response = await fetch("https://challenges.cloudflare.com/turnstile/v0/siteverify", {
