@@ -7,6 +7,7 @@ import { DeliveryResult, MagazineIssue, Subscription } from "@/lib/types";
 
 const DAILY_SEND_LIMIT = 1;
 const MAX_ARTICLES_PER_EDITION = 6;
+type MagazineEdition = Awaited<ReturnType<typeof buildMagazineEdition>>;
 
 export async function runDailyDelivery(): Promise<DeliveryResult[]> {
   const supabase = createSupabaseAdminClient();
@@ -87,75 +88,7 @@ export async function sendMagazineIssue(issueId: string): Promise<DeliveryResult
   const results: DeliveryResult[] = [];
 
   for (const subscription of (subscriptions ?? []) as Subscription[]) {
-    const { data: existingDelivery, error: existingError } = await supabase
-      .from("magazine_deliveries")
-      .select("id")
-      .eq("issue_id", issueId)
-      .eq("subscription_id", subscription.id)
-      .eq("status", "sent")
-      .maybeSingle();
-
-    if (existingError) throw existingError;
-
-    if (existingDelivery) {
-      results.push({ status: "skipped", subscriptionId: subscription.id, reason: "numero ya enviado" });
-      continue;
-    }
-
-    try {
-      await sendMagazineEdition({
-        to: subscription.kindle_email,
-        filename: edition.filename,
-        epub: edition.buffer,
-        issueTitle: issue.title,
-        issueNumber: issue.issue_number,
-        chapterCount: edition.chapterCount,
-      });
-
-      const now = new Date().toISOString();
-      const { error: insertError } = await supabase.from("magazine_deliveries").insert({
-        issue_id: issueId,
-        subscription_id: subscription.id,
-        kindle_email: subscription.kindle_email,
-        status: "sent",
-        sent_at: now,
-      });
-
-      if (insertError) throw insertError;
-
-      await supabase
-        .from("subscriptions")
-        .update({
-          last_edition_fingerprint: edition.fingerprint,
-          last_success_at: now,
-          last_failure_at: null,
-          last_failure_message: null,
-        })
-        .eq("id", subscription.id);
-
-      results.push({ status: "sent", subscriptionId: subscription.id, issueId });
-    } catch (error) {
-      const message = error instanceof Error ? error.message : "Fallo desconocido";
-
-      await supabase.from("magazine_deliveries").insert({
-        issue_id: issueId,
-        subscription_id: subscription.id,
-        kindle_email: subscription.kindle_email,
-        status: "failed",
-        error_message: message,
-      });
-
-      await supabase
-        .from("subscriptions")
-        .update({
-          last_failure_at: new Date().toISOString(),
-          last_failure_message: message,
-        })
-        .eq("id", subscription.id);
-
-      await notifyOperator(`Fallo enviando Revista 421 #${issue.issue_number} a ${subscription.kindle_email} (${subscription.id}): ${message}`);
-      results.push({ status: "failed", subscriptionId: subscription.id, error: message });
-    }
+    results.push(await deliverMagazineIssueToSubscription(issue as MagazineIssue, edition, subscription));
   }
 
   if (results.some((result) => result.status === "sent")) {
@@ -172,6 +105,109 @@ export async function sendMagazineIssue(issueId: string): Promise<DeliveryResult
   }
 
   return results;
+}
+
+export async function sendLatestMagazineIssueToSubscription(subscriptionId: string): Promise<DeliveryResult | null> {
+  const supabase = createSupabaseAdminClient();
+  const { data: subscription, error: subscriptionError } = await supabase
+    .from("subscriptions")
+    .select("*")
+    .eq("id", subscriptionId)
+    .eq("delivery_enabled", true)
+    .single();
+
+  if (subscriptionError) throw subscriptionError;
+
+  const { data: issue, error: issueError } = await supabase
+    .from("magazine_issues")
+    .select("*")
+    .in("status", ["ready", "sent"])
+    .order("publication_date", { ascending: false })
+    .order("issue_number", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+
+  if (issueError) throw issueError;
+  if (!issue) return null;
+
+  const edition = await buildMagazineEdition(issue as MagazineIssue);
+  return deliverMagazineIssueToSubscription(issue as MagazineIssue, edition, subscription as Subscription);
+}
+
+async function deliverMagazineIssueToSubscription(
+  issue: MagazineIssue,
+  edition: MagazineEdition,
+  subscription: Subscription,
+): Promise<DeliveryResult> {
+  const supabase = createSupabaseAdminClient();
+  const { data: existingDelivery, error: existingError } = await supabase
+    .from("magazine_deliveries")
+    .select("id")
+    .eq("issue_id", issue.id)
+    .eq("subscription_id", subscription.id)
+    .eq("status", "sent")
+    .maybeSingle();
+
+  if (existingError) throw existingError;
+
+  if (existingDelivery) {
+    return { status: "skipped", subscriptionId: subscription.id, reason: "numero ya enviado" };
+  }
+
+  try {
+    await sendMagazineEdition({
+      to: subscription.kindle_email,
+      filename: edition.filename,
+      epub: edition.buffer,
+      issueTitle: issue.title,
+      issueNumber: issue.issue_number,
+      chapterCount: edition.chapterCount,
+    });
+
+    const now = new Date().toISOString();
+    const { error: insertError } = await supabase.from("magazine_deliveries").insert({
+      issue_id: issue.id,
+      subscription_id: subscription.id,
+      kindle_email: subscription.kindle_email,
+      status: "sent",
+      sent_at: now,
+    });
+
+    if (insertError) throw insertError;
+
+    await supabase
+      .from("subscriptions")
+      .update({
+        last_edition_fingerprint: edition.fingerprint,
+        last_success_at: now,
+        last_failure_at: null,
+        last_failure_message: null,
+      })
+      .eq("id", subscription.id);
+
+    return { status: "sent", subscriptionId: subscription.id, issueId: issue.id };
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "Fallo desconocido";
+
+    await supabase.from("magazine_deliveries").insert({
+      issue_id: issue.id,
+      subscription_id: subscription.id,
+      kindle_email: subscription.kindle_email,
+      status: "failed",
+      error_message: message,
+    });
+
+    await supabase
+      .from("subscriptions")
+      .update({
+        last_failure_at: new Date().toISOString(),
+        last_failure_message: message,
+      })
+      .eq("id", subscription.id);
+
+    await notifyOperator(`Fallo enviando Revista 421 #${issue.issue_number} a ${subscription.kindle_email} (${subscription.id}): ${message}`);
+    return { status: "failed", subscriptionId: subscription.id, error: message };
+  }
 }
 
 async function deliverToSubscription(subscription: Subscription, allArticles: Awaited<ReturnType<typeof fetch421Feed>>): Promise<DeliveryResult> {

@@ -3,7 +3,7 @@
 import { redirect } from "next/navigation";
 import { normalizeEmail } from "@/lib/security";
 import { getEnv } from "@/lib/env";
-import { sendMagazineIssue, sendMagazineTest } from "@/lib/delivery";
+import { sendLatestMagazineIssueToSubscription, sendMagazineIssue, sendMagazineTest } from "@/lib/delivery";
 import { createSupabaseAdminClient } from "@/lib/supabase/server";
 import { magazineIssueSchema, magazineSendSchema, magazineTestSchema, subscriptionSchema } from "@/lib/validation";
 import { verifyCaptcha } from "@/lib/security";
@@ -35,23 +35,36 @@ export async function subscribeAction(formData: FormData) {
 
   if (allowed === false) redirect("/?error=rate#suscribirme");
 
-  const { error } = await supabase.from("subscriptions").upsert(
-    {
-      kindle_email: kindleEmail,
-      delivery_enabled: true,
-      accepted_terms_at: new Date().toISOString(),
-      last_failure_at: null,
-      last_failure_message: null,
-    },
-    { onConflict: "kindle_email" },
-  );
+  const { data: subscription, error } = await supabase
+    .from("subscriptions")
+    .upsert(
+      {
+        kindle_email: kindleEmail,
+        delivery_enabled: true,
+        accepted_terms_at: new Date().toISOString(),
+        last_failure_at: null,
+        last_failure_message: null,
+      },
+      { onConflict: "kindle_email" },
+    )
+    .select("id")
+    .single();
 
   if (error) {
     console.error("Kindle421 subscribe upsert error", error);
     redirect(`/?error=db-${encodeURIComponent(error.code ?? "unknown")}#suscribirme`);
   }
 
-  redirect("/?subscribed=1#suscribirme");
+  let deliveryStatus = "none";
+  try {
+    const deliveryResult = subscription ? await sendLatestMagazineIssueToSubscription(subscription.id) : null;
+    deliveryStatus = deliveryResult?.status ?? "none";
+  } catch (deliveryError) {
+    console.error("Kindle421 instant delivery error", deliveryError);
+    deliveryStatus = "failed";
+  }
+
+  redirect(`/?subscribed=1&delivery=${deliveryStatus}#suscribirme`);
 }
 
 export async function createMagazineIssueAction(formData: FormData) {

@@ -6,7 +6,7 @@ import { CopyChip } from "@/app/copy-chip";
 export default async function HomePage({
   searchParams,
 }: {
-  searchParams: Promise<{ subscribed?: string; error?: string; test?: string }>;
+  searchParams: Promise<{ subscribed?: string; delivery?: string; error?: string; test?: string }>;
 }) {
   const params = await searchParams;
 
@@ -113,7 +113,9 @@ export default async function HomePage({
             </p>
             {params.subscribed ? (
               <p className="subscribe-fineprint is-success" role="status">
-                Listo. Guardamos tu dirección Kindle y la suscripción quedó activa.
+                {params.delivery === "sent"
+                  ? "Listo. Guardamos tu dirección Kindle y ya te enviamos el último número."
+                  : "Listo. Guardamos tu dirección Kindle y la suscripción quedó activa."}
               </p>
             ) : null}
             {params.error ? (
